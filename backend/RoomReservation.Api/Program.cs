@@ -32,6 +32,7 @@ builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IReservationValidator, ReservationValidator>();
 builder.Services.AddScoped<ReservationLifecycle>();
 
@@ -40,6 +41,7 @@ builder.Services
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
+        options.JsonSerializerOptions.Converters.Add(new OffsetDateTimeConverter());
         // Malformed JSON must not echo System.Text.Json internals back to the client.
         options.AllowInputFormatterExceptionMessages = false;
     })

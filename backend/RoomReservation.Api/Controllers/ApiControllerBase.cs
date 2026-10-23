@@ -17,4 +17,10 @@ public abstract class ApiControllerBase : ControllerBase
         ResultStatus.Conflict => Conflict(new ApiErrorResponse(result.Errors)),
         _ => throw new InvalidOperationException($"Unhandled result status {result.Status}.")
     };
+
+    /// <summary>Like <see cref="ToActionResult{T}"/>, but success is 201 Created with a <c>Location</c> header.</summary>
+    protected IActionResult ToCreatedResult<T>(Result<T> result, string actionName, Func<T, object> routeValues) =>
+        result.Status == ResultStatus.Ok
+            ? CreatedAtAction(actionName, routeValues(result.Value!), result.Value)
+            : ToActionResult(result);
 }
