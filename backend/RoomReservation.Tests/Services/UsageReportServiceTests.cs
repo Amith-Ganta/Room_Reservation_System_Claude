@@ -38,7 +38,7 @@ public class UsageReportServiceTests
             _clock, MappingProfileTests.NewConfiguration().CreateMapper());
     }
 
-    /// <summary>Adds a past reservation (an hour apart from the others is not needed: the report does not check overlaps).</summary>
+    /// <summary>Adds a reservation that starts <paramref name="startsIn"/> from now. Overlaps do not matter: the report never checks them.</summary>
     private Reservation Add(Room room, ReservationStatus status, TimeSpan startsIn, TimeSpan duration, TimeSpan? endedAfter = null)
     {
         var start = TestDb.Now + startsIn;
@@ -95,6 +95,19 @@ public class UsageReportServiceTests
     {
         Add(2, ReservationStatus.Completed);
         Add(2, ReservationStatus.Cancelled);
+
+        var row = await AtlasAsync();
+
+        row.UtilizationPercent.Should().Be(50m);
+        row.IsOftenBookedRarelyUsed.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task A_threshold_met_exactly_with_durations_that_are_not_exact_in_decimal_hours_is_not_flagged()
+    {
+        var forty = TimeSpan.FromMinutes(40);
+        Add(2, ReservationStatus.Completed, forty);
+        Add(2, ReservationStatus.Cancelled, forty);
 
         var row = await AtlasAsync();
 
@@ -439,7 +452,8 @@ public class UsageReportServiceTests
         flagged.Should().ContainSingle().Which.RoomName.Should().Be("Boardroom");
         var boardroom = flagged.Single();
         (boardroom.CompletedBookings + boardroom.CancelledBookings).Should().Be(6);
-        boardroom.UtilizationPercent.Should().BeLessThan(5m);
+        boardroom.PlannedHours.Should().Be(12m);
+        boardroom.UtilizationPercent.Should().Be(3.5m);
         report.Rooms.Single(r => r.RoomName == "Echo").IsOftenBookedRarelyUsed.Should().BeFalse();
         report.Rooms.First().RoomName.Should().Be("Boardroom");
     }

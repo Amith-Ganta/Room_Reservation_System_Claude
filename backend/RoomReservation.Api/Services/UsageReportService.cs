@@ -54,13 +54,14 @@ public sealed class UsageReportService(
         var upcoming = found.Count(r => r.Status == ReservationStatus.Booked);
         var resolved = completed.Count + cancelled;
 
-        // Unrounded figures decide the percentage and the flag; rounding happens only when the DTO is built.
-        var planned = found
+        // Time is summed as whole ticks, so the percentage and the flag are decided without any rounding noise
+        // (20 minutes is not exact in decimal hours). Hours are only derived, and rounded, for display.
+        var plannedTicks = found
             .Where(r => r.Status != ReservationStatus.Booked)
-            .Sum(r => Hours(r.End - r.Start));
-        var used = completed.Sum(UsedHours);
+            .Sum(r => (r.End - r.Start).Ticks);
+        var usedTicks = completed.Sum(UsedTicks);
 
-        decimal? utilization = planned > 0 ? used / planned * 100m : null;
+        decimal? utilization = plannedTicks > 0 ? (decimal)usedTicks * 100m / plannedTicks : null;
         var flagged = resolved >= thresholds.MinBookingsToFlag
                       && utilization is { } percent
                       && percent < thresholds.UnderusedThresholdPercent;
@@ -68,22 +69,20 @@ public sealed class UsageReportService(
         return new RoomUsageDto(
             room.Id, room.Name, room.Floor,
             found.Count, completed.Count, cancelled, upcoming,
-            Round(planned, 2), Round(used, 2), utilization is { } value ? Round(value, 1) : null,
+            Round(Hours(plannedTicks), 2), Round(Hours(usedTicks), 2), utilization is { } value ? Round(value, 1) : null,
             flagged);
     }
 
-    /// <summary>Hours a completed meeting really took: until it was ended early (or its planned end), clamped to 0..planned.</summary>
-    private static decimal UsedHours(Reservation reservation)
+    /// <summary>Ticks a completed meeting really took: until it was ended early (or its planned end), clamped to 0..planned.</summary>
+    private static long UsedTicks(Reservation reservation)
     {
-        var planned = reservation.End - reservation.Start;
-        var actual = (reservation.EndedAt ?? reservation.End) - reservation.Start;
-        var clamped = actual < TimeSpan.Zero ? TimeSpan.Zero : actual > planned ? planned : actual;
-        return Hours(clamped);
+        var planned = (reservation.End - reservation.Start).Ticks;
+        var actual = ((reservation.EndedAt ?? reservation.End) - reservation.Start).Ticks;
+        return Math.Clamp(actual, 0, planned);
     }
 
     private static decimal Round(decimal value, int decimals) =>
         Math.Round(value, decimals, MidpointRounding.AwayFromZero);
 
-    // Ticks keep the conversion exact; a double would add binary rounding noise before the percentage is taken.
-    private static decimal Hours(TimeSpan span) => (decimal)span.Ticks / TimeSpan.TicksPerHour;
+    private static decimal Hours(long ticks) => (decimal)ticks / TimeSpan.TicksPerHour;
 }
