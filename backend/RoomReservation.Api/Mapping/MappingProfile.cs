@@ -13,7 +13,8 @@ public sealed class MappingProfile : Profile
     {
         CreateMap<User, UserDto>()
             .ForCtorParam(nameof(UserDto.ActiveReservationCount),
-                options => options.MapFrom((_, context) => context.Items.TryGetValue(ActiveCountItem, out var count) ? (int)count : 0));
+                options => options.MapFrom((_, context) =>
+                    context.TryGetItems(out var items) && items.TryGetValue(ActiveCountItem, out var count) ? (int)count : 0));
 
         CreateMap<Room, RoomDto>()
             .ForCtorParam(nameof(RoomDto.Equipment), options => options.MapFrom(room => EquipmentFlags.Expand(room.Equipment)));
