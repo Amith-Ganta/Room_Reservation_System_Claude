@@ -1,6 +1,9 @@
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using RoomReservation.Api.Common;
 using RoomReservation.Api.Configuration;
+using RoomReservation.Api.Data;
+using RoomReservation.Api.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +20,13 @@ builder.Services
     .ValidateOnStart();
 
 builder.Services.AddSingleton(TimeProvider.System);
+
+var databaseName = builder.Configuration["Database:Name"];
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseInMemoryDatabase(string.IsNullOrWhiteSpace(databaseName) ? "RoomReservation" : databaseName));
+builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 
 builder.Services
     .AddControllers()
@@ -41,6 +51,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+if (app.Configuration.GetValue("Seed:Enabled", false))
+{
+    using var scope = app.Services.CreateScope();
+    await DbSeeder.SeedAsync(
+        scope.ServiceProvider.GetRequiredService<AppDbContext>(),
+        scope.ServiceProvider.GetRequiredService<TimeProvider>());
+}
 
 // Unhandled exceptions are logged by the middleware; the client only gets the standard error body.
 app.UseExceptionHandler(errorApp => errorApp.Run(context =>
