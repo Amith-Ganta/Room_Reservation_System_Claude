@@ -28,6 +28,8 @@ public sealed class MappingProfile : Profile
 
         CreateMap<ReservationListQuery, ReservationFilter>()
             .ForMember(filter => filter.Status, options => options.MapFrom(query => ParseStatus(query.Status)));
+
+        CreateMap<UsageReportQuery, UsageReportFilter>();
     }
 
     // Blank text means "no status filter"; the query was already validated, so a bad value never gets here.

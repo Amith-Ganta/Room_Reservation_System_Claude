@@ -1,38 +1,114 @@
-# Spec 07 -- Usage Report ("often booked, rarely used")
+# Spec 07 -- Usage report
 
 ## Overview
-Answers the task's key question: which rooms are booked often but rarely used? Compares planned hours with
-hours actually used per room, and flags rooms with many bookings and low utilization.
+The task asks: which rooms are booked often but rarely used? This endpoint answers it by comparing, per room,
+the hours that were **planned** with the hours that were **actually used**. All numbers are calculated in the
+back end. The front end (Spec 12) only shows them and exports them to PDF.
 
 ## Depends on
-Spec 05.
+Spec 05 (reservation repository, lifecycle, `ListForReportAsync`) and Spec 03 (room repository).
 
 ## Endpoints
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | /api/reports/usage | Per-room usage; optional `from`, `to` |
+| GET | /api/reports/usage | Usage figures for every room, with the "often booked, rarely used" flag |
 
-## Calculation (backend only)
-Only resolved reservations (Completed or Cancelled) are judged; upcoming ones are counted but not judged.
-- `plannedHours` = sum of `End - Start` over completed + cancelled.
-- `usedHours` = sum over completed of `max(0, (EndedAt ?? End) - Start)`; cancelled count as 0.
-- `utilizationPercent` = `used / planned * 100`, 1 decimal, null when nothing is planned.
-- `isOftenBookedRarelyUsed` = resolved count >= `MinBookingsToFlag` and utilization < `UnderusedThresholdPercent`.
-- Sorted: flagged first, then total bookings descending, then name.
+Query parameters (both optional, ISO 8601 timestamps with an offset, bound with `OffsetDateTimeBinder`):
 
-## Response
-`generatedAt`, `from`, `to`, the two thresholds, and `rooms[]` with roomId, roomName, floor, totalBookings,
-completedBookings, cancelledBookings, upcomingBookings, plannedHours, usedHours, utilizationPercent, isOftenBookedRarelyUsed.
+| Name | Meaning |
+|------|---------|
+| `from` | Count only reservations that **start** on or after this instant |
+| `to` | Count only reservations that **start** on or before this instant |
+
+Each reservation belongs to the period in which it starts, so a long meeting is never counted in two reports.
+`from == to` is allowed (a single instant). `from > to` is rejected by model validation with HTTP 400
+`INVALID_REQUEST`, the same as `GET /api/reservations`. The report is not paged.
+
+## Calculation (back end only)
+For each room, over the reservations in the window:
+
+| Figure | Definition |
+|--------|-----------|
+| `totalBookings` | All reservations, any status |
+| `completedBookings` | Status `Completed` |
+| `cancelledBookings` | Status `Cancelled` |
+| `upcomingBookings` | Status `Booked` (not finished yet: not started, or in progress) |
+| `plannedHours` | Sum of `End - Start` over completed and cancelled reservations |
+| `usedHours` | Sum over completed reservations of `(EndedAt ?? End) - Start`, clamped to `0 .. End - Start`. Cancelled reservations add 0 |
+| `utilizationPercent` | `usedHours / plannedHours * 100`, or `null` when `plannedHours` is 0 |
+| `isOftenBookedRarelyUsed` | `completedBookings + cancelledBookings >= MinBookingsToFlag` **and** `utilizationPercent < UnderusedThresholdPercent` |
+
+Only **resolved** reservations (Completed or Cancelled) are judged. A Booked reservation is counted in
+`totalBookings` and `upcomingBookings` but not in the hours, because its outcome is not known yet.
+
+Rounding: `plannedHours` and `usedHours` to 2 decimals, `utilizationPercent` to 1 decimal, all with
+`MidpointRounding.AwayFromZero`. The percentage and the flag are computed from the **unrounded** hours,
+so rounding never moves a room across the threshold. The comparison is strict: a room at exactly
+`UnderusedThresholdPercent` is not flagged; a room with exactly `MinBookingsToFlag` resolved bookings can be.
+
+Thresholds come from `UsageReportOptions` (`MinBookingsToFlag` 4, `UnderusedThresholdPercent` 50 in `appsettings.json`).
+
+## Response (`UsageReportDto`)
+```json
+{
+  "generatedAt": "2026-06-01T10:00:00+00:00",
+  "from": null,
+  "to": null,
+  "minBookingsToFlag": 4,
+  "underusedThresholdPercent": 50,
+  "rooms": [
+    {
+      "roomId": "guid", "roomName": "Boardroom", "floor": 3,
+      "totalBookings": 7, "completedBookings": 2, "cancelledBookings": 4, "upcomingBookings": 1,
+      "plannedHours": 12.0, "usedHours": 0.42, "utilizationPercent": 3.5,
+      "isOftenBookedRarelyUsed": true
+    }
+  ]
+}
+```
+`from` and `to` echo the query (null when not supplied). `generatedAt` is the injected `TimeProvider` clock.
+
+Every room is listed, including inactive rooms and rooms with no reservations in the window (all counts 0,
+hours 0, `utilizationPercent: null`, not flagged). Order: flagged rooms first, then `totalBookings` descending,
+then room name.
 
 ## Files to create
-`Dtos/UsageReportDtos.cs`, `Services/UsageReportService.cs`, `Controllers/ReportsController.cs`, tests.
+`Dtos/UsageReportDtos.cs` (`UsageReportDto`, `RoomUsageDto`, `UsageReportQuery`),
+`Services/UsageReportService.cs` (with `IUsageReportService`), `Controllers/ReportsController.cs`,
+`Mapping/MappingProfile.cs` (query to `UsageReportFilter`), `Program.cs` (register `IUsageReportService`),
+tests: service, mapping (`AssertConfigurationIsValid` still passes), endpoint tests via `WebApplicationFactory`.
+
+## New dependencies
+None. `IReservationRepository.ListForReportAsync` and `IRoomRepository.ListAsync` already exist.
 
 ## Rules for implementation
-1. Thresholds come from `IOptions<UsageReportOptions>`.
-2. No calculation in the controller or the front end; the front end only displays and exports.
-3. Rooms with no bookings still appear (utilization null, not flagged).
+1. Controller has no logic: bind the query, call the service, return `ToActionResult`.
+2. The service calls `ReservationLifecycle.CompleteElapsedAsync` first, so elapsed meetings are Completed before
+   they are judged. It takes no write lock (the pass is idempotent, as in `UserService`).
+3. Two queries, no N+1: all rooms (`IRoomRepository.ListAsync(new RoomFilter())`) and the windowed reservations
+   (`ListForReportAsync`). Group the reservations by `RoomId` in memory.
+4. Thresholds come from `IOptions<UsageReportOptions>`. Never hard-code 4, 50 or any other threshold.
+5. Use `decimal` or `TimeSpan` arithmetic for hours; round only when building the DTO (see Calculation).
+6. Use `TimeProvider` for `generatedAt`. No `DateTime.Now`/`UtcNow`. No `[Authorize]`, no migrations.
+7. Map the query to `UsageReportFilter` with AutoMapper. The per-room figures are built in the service,
+   because they are calculated values and not a property mapping.
+8. Return `Result<UsageReportDto>.Ok(...)`. The service does not throw for an expected failure
+   (there is none: bad input is already rejected by model validation).
 
 ## Definition of done
-- [ ] `dotnet build` and `dotnet test` pass.
-- [ ] Tests: flagged vs not flagged around the threshold, cancelled counts as unused, ended-early lowers utilization, date range filter, no-bookings room, ordering.
-- [ ] Seeded data produces at least one flagged room.
+- [ ] `dotnet build` and `dotnet test` pass (baseline 222 tests).
+- [ ] Tests: a room is flagged when it has enough resolved bookings and utilization is below the threshold;
+      not flagged just at the threshold (exactly 50 %), with too few resolved bookings (3 of 4), or with
+      exactly `MinBookingsToFlag` bookings and low use (flagged).
+- [ ] Tests: a cancelled booking counts as planned but unused; an ended-early meeting lowers utilization;
+      a completed meeting without `EndedAt` counts fully; `EndedAt` before `Start` is clamped to 0.
+- [ ] Tests: Booked reservations are counted in `upcomingBookings` and `totalBookings` but not in the hours;
+      an elapsed Booked reservation becomes Completed after the clock advances.
+- [ ] Tests: `from`/`to` filter by start (inclusive on both ends); `from > to` returns 400 `INVALID_REQUEST`.
+- [ ] Tests: a room without bookings is listed with zeros and `null` utilization; an inactive room is listed;
+      ordering is flagged first, then total bookings descending, then name.
+- [ ] Tests: thresholds are read from options (a test with different option values changes the flag).
+- [ ] Endpoint test checks the JSON shape (field names, `generatedAt`, echoed `from`/`to`).
+- [ ] Seeded data (`DbSeeder`) gives exactly one flagged room: Boardroom (6 resolved, about 3.5 % used).
+- [ ] Mapping profile configuration test passes.
+- [ ] Swagger lists `GET /api/reports/usage`.

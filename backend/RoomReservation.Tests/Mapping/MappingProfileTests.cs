@@ -99,6 +99,27 @@ public class MappingProfileTests
     }
 
     [Fact]
+    public void Usage_report_query_is_mapped_to_a_filter()
+    {
+        var from = TestDb.Now;
+        var to = TestDb.Now.AddDays(7);
+
+        var filter = Mapper.Map<UsageReportFilter>(new UsageReportQuery { From = from, To = to });
+
+        filter.From.Should().Be(from);
+        filter.To.Should().Be(to);
+    }
+
+    [Fact]
+    public void Usage_report_query_without_a_window_gives_an_open_filter()
+    {
+        var filter = Mapper.Map<UsageReportFilter>(new UsageReportQuery());
+
+        filter.From.Should().BeNull();
+        filter.To.Should().BeNull();
+    }
+
+    [Fact]
     public void User_is_mapped_with_the_active_count_from_the_context_item()
     {
         var user = TestDb.User("Ann", "Lee");
