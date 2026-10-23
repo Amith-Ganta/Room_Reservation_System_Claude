@@ -45,7 +45,7 @@ frontend/            React + TS app (src/api, src/pages, src/components, src/lib
 | 01 | project-setup | merged |
 | 02 | domain-data-seeder | merged |
 | 03 | rooms-api | merged |
-| 04 | booking-rules | in progress |
+| 04 | booking-rules | merged |
 | 05 | reservations-api | pending |
 | 06 | users-api | pending |
 | 07 | usage-report | pending |
