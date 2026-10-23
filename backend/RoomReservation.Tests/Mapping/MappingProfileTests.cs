@@ -97,4 +97,22 @@ public class MappingProfileTests
     {
         Mapper.Map<ReservationFilter>(new ReservationListQuery()).Status.Should().BeNull();
     }
+
+    [Fact]
+    public void User_is_mapped_with_the_active_count_from_the_context_item()
+    {
+        var user = TestDb.User("Ann", "Lee");
+
+        var dto = Mapper.Map<UserDto>(user, options => options.Items[MappingProfile.ActiveCountItem] = 3);
+
+        dto.Should().Be(new UserDto(user.Id, "Ann", "Lee", 3));
+    }
+
+    [Fact]
+    public void User_without_a_context_item_gets_a_zero_count()
+    {
+        var user = TestDb.User("Ann", "Lee");
+
+        Mapper.Map<UserDto>(user).ActiveReservationCount.Should().Be(0);
+    }
 }

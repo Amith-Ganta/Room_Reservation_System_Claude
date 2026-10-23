@@ -6,8 +6,16 @@ namespace RoomReservation.Api.Mapping;
 
 public sealed class MappingProfile : Profile
 {
+    /// <summary>Key of the mapping context item that carries a user's active reservation count (it is not on <see cref="User"/>).</summary>
+    public const string ActiveCountItem = "ActiveReservationCount";
+
     public MappingProfile()
     {
+        CreateMap<User, UserDto>()
+            .ForCtorParam(nameof(UserDto.ActiveReservationCount),
+                options => options.MapFrom((_, context) =>
+                    context.TryGetItems(out var items) && items.TryGetValue(ActiveCountItem, out var count) ? (int)count : 0));
+
         CreateMap<Room, RoomDto>()
             .ForCtorParam(nameof(RoomDto.Equipment), options => options.MapFrom(room => EquipmentFlags.Expand(room.Equipment)));
 
