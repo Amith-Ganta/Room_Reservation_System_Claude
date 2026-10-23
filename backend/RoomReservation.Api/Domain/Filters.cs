@@ -17,7 +17,10 @@ public class ReservationFilter
     public Guid? UserId { get; set; }
     public ReservationStatus? Status { get; set; }
 
-    /// <summary>Keeps reservations that overlap the [From, To] window.</summary>
+    /// <summary>
+    /// Keeps reservations that overlap the half-open window [From, To): a reservation starting at To or finishing
+    /// at From is excluded. The finish is <c>EndedAt</c> when the meeting was ended early, otherwise <c>End</c>.
+    /// </summary>
     public DateTimeOffset? From { get; set; }
     public DateTimeOffset? To { get; set; }
 }

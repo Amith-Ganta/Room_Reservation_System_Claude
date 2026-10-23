@@ -12,7 +12,8 @@ public class ReservationRepositoryTests
 
     private sealed class Fixture
     {
-        public AppDbContext Db { get; } = TestDb.Create();
+        public string DbName { get; } = TestDb.NewName();
+        public AppDbContext Db { get; }
         public ReservationRepository Repo { get; }
         public Room Room { get; } = TestDb.Room("Atlas");
         public Room OtherRoom { get; } = TestDb.Room("Boardroom");
@@ -21,10 +22,18 @@ public class ReservationRepositoryTests
 
         public Fixture()
         {
+            Db = TestDb.Create(DbName);
             Db.Rooms.AddRange(Room, OtherRoom);
             Db.Users.AddRange(Ann, Bob);
             Db.SaveChanges();
             Repo = new ReservationRepository(Db);
+        }
+
+        /// <summary>Status as stored, read through a fresh context so only saved changes are visible.</summary>
+        public async Task<ReservationStatus> SavedStatusAsync(Guid id)
+        {
+            await using var other = TestDb.Create(DbName);
+            return (await other.Reservations.FindAsync(id))!.Status;
         }
 
         public async Task<Reservation> AddAsync(Room room, User user, DateTimeOffset start, TimeSpan duration,
@@ -128,10 +137,10 @@ public class ReservationRepositoryTests
 
         await f.Repo.CompleteElapsedAsync(TestDb.Now);
 
-        (await f.Repo.GetByIdAsync(past.Id))!.Status.Should().Be(ReservationStatus.Completed);
-        (await f.Repo.GetByIdAsync(runningNow.Id))!.Status.Should().Be(ReservationStatus.Booked);
-        (await f.Repo.GetByIdAsync(future.Id))!.Status.Should().Be(ReservationStatus.Booked);
-        (await f.Repo.GetByIdAsync(cancelledPast.Id))!.Status.Should().Be(ReservationStatus.Cancelled);
+        (await f.SavedStatusAsync(past.Id)).Should().Be(ReservationStatus.Completed);
+        (await f.SavedStatusAsync(runningNow.Id)).Should().Be(ReservationStatus.Booked);
+        (await f.SavedStatusAsync(future.Id)).Should().Be(ReservationStatus.Booked);
+        (await f.SavedStatusAsync(cancelledPast.Id)).Should().Be(ReservationStatus.Cancelled);
     }
 
     [Fact]
@@ -142,7 +151,7 @@ public class ReservationRepositoryTests
 
         await f.Repo.CompleteElapsedAsync(TestDb.Now);
 
-        (await f.Repo.GetByIdAsync(endsNow.Id))!.Status.Should().Be(ReservationStatus.Completed);
+        (await f.SavedStatusAsync(endsNow.Id)).Should().Be(ReservationStatus.Completed);
     }
 
     [Fact]
@@ -188,6 +197,100 @@ public class ReservationRepositoryTests
 
         list.Should().ContainSingle().Which.Id.Should().Be(inside.Id);
         list[0].Room.Name.Should().Be("Atlas");
+    }
+
+    [Fact]
+    public async Task User_overlap_can_exclude_the_reservation_being_changed()
+    {
+        var f = new Fixture();
+        var existing = await f.AddAsync(f.Room, f.Ann, T, OneHour);
+
+        (await f.Repo.HasUserOverlapAsync(f.Ann.Id, T, T.AddHours(1), existing.Id)).Should().BeFalse();
+        (await f.Repo.HasUserOverlapAsync(f.Ann.Id, T, T.AddHours(1), Guid.NewGuid())).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Overlap_detects_containing_and_contained_intervals()
+    {
+        var f = new Fixture();
+        await f.AddAsync(f.Room, f.Ann, T, TimeSpan.FromHours(4));
+
+        (await f.Repo.HasRoomOverlapAsync(f.Room.Id, T.AddHours(1), T.AddHours(2), null)).Should().BeTrue("contained");
+        (await f.Repo.HasRoomOverlapAsync(f.Room.Id, T.AddHours(-1), T.AddHours(6), null)).Should().BeTrue("containing");
+        (await f.Repo.HasUserOverlapAsync(f.Ann.Id, T.AddHours(1), T.AddHours(2), null)).Should().BeTrue("contained");
+        (await f.Repo.HasUserOverlapAsync(f.Ann.Id, T.AddHours(-1), T.AddHours(6), null)).Should().BeTrue("containing");
+    }
+
+    [Fact]
+    public async Task A_new_meeting_may_start_exactly_when_an_early_end_happened()
+    {
+        var f = new Fixture();
+        await f.AddAsync(f.Room, f.Ann, T, TimeSpan.FromHours(2), ReservationStatus.Completed, endedAt: T.AddMinutes(30));
+
+        (await f.Repo.HasRoomOverlapAsync(f.Room.Id, T.AddMinutes(30), T.AddMinutes(60), null)).Should().BeFalse();
+        (await f.Repo.HasUserOverlapAsync(f.Ann.Id, T.AddMinutes(30), T.AddMinutes(60), null)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Completed_reservations_still_block_the_room_and_the_organizer()
+    {
+        var f = new Fixture();
+        await f.AddAsync(f.Room, f.Ann, T, OneHour, ReservationStatus.Completed);
+
+        (await f.Repo.HasRoomOverlapAsync(f.Room.Id, T, T.AddHours(1), null)).Should().BeTrue();
+        (await f.Repo.HasUserOverlapAsync(f.Ann.Id, T, T.AddHours(1), null)).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task List_filters_by_status_alone()
+    {
+        var f = new Fixture();
+        await f.AddAsync(f.Room, f.Ann, T, OneHour);
+        var cancelled = await f.AddAsync(f.OtherRoom, f.Bob, T, OneHour, ReservationStatus.Cancelled);
+
+        var list = await f.Repo.ListAsync(new ReservationFilter { Status = ReservationStatus.Cancelled });
+
+        list.Select(r => r.Id).Should().Equal(cancelled.Id);
+    }
+
+    [Fact]
+    public async Task List_date_range_is_half_open_at_both_ends()
+    {
+        var f = new Fixture();
+        var endsAtFrom = await f.AddAsync(f.Room, f.Ann, T.AddHours(-1), OneHour);      // ends exactly at From
+        var startsAtTo = await f.AddAsync(f.OtherRoom, f.Bob, T.AddHours(2), OneHour);   // starts exactly at To
+        var inside = await f.AddAsync(f.Room, f.Bob, T.AddMinutes(30), OneHour);
+
+        var list = await f.Repo.ListAsync(new ReservationFilter { From = T, To = T.AddHours(2) });
+
+        list.Select(r => r.Id).Should().Equal(inside.Id);
+        list.Select(r => r.Id).Should().NotContain([endsAtFrom.Id, startsAtTo.Id]);
+    }
+
+    [Fact]
+    public async Task List_date_range_uses_the_early_end_time()
+    {
+        var f = new Fixture();
+        // Planned for 4 hours but ended 30 minutes in: it no longer overlaps a window that starts an hour after T.
+        await f.AddAsync(f.Room, f.Ann, T, TimeSpan.FromHours(4), ReservationStatus.Completed, endedAt: T.AddMinutes(30));
+
+        var list = await f.Repo.ListAsync(new ReservationFilter { From = T.AddHours(1), To = T.AddHours(2) });
+
+        list.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task List_for_report_bounds_are_inclusive()
+    {
+        var f = new Fixture();
+        var atFrom = await f.AddAsync(f.Room, f.Ann, T, OneHour);
+        var atTo = await f.AddAsync(f.OtherRoom, f.Bob, T.AddDays(1), OneHour);
+        await f.AddAsync(f.Room, f.Bob, T.AddDays(1).AddMinutes(1), OneHour);
+        await f.AddAsync(f.OtherRoom, f.Ann, T.AddMinutes(-1), OneHour);
+
+        var list = await f.Repo.ListForReportAsync(new UsageReportFilter { From = T, To = T.AddDays(1) });
+
+        list.Select(r => r.Id).Should().BeEquivalentTo([atFrom.Id, atTo.Id]);
     }
 
     [Fact]

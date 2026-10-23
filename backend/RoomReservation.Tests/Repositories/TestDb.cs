@@ -9,9 +9,12 @@ internal static class TestDb
 {
     public static readonly DateTimeOffset Now = new(2026, 6, 1, 10, 0, 0, TimeSpan.Zero);
 
-    public static AppDbContext Create() =>
+    public static string NewName() => $"tests-{Guid.NewGuid()}";
+
+    /// <summary>Pass the same name to get a second, independent context over the same data (proves a save happened).</summary>
+    public static AppDbContext Create(string? name = null) =>
         new(new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase($"tests-{Guid.NewGuid()}")
+            .UseInMemoryDatabase(name ?? NewName())
             .Options);
 
     public static Room Room(string name = "Room", int capacity = 10, int floor = 1,

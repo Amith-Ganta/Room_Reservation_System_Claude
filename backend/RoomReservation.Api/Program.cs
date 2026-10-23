@@ -21,8 +21,9 @@ builder.Services
 
 builder.Services.AddSingleton(TimeProvider.System);
 
+var databaseName = builder.Configuration["Database:Name"];
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseInMemoryDatabase(builder.Configuration["Database:Name"] ?? "RoomReservation"));
+    options.UseInMemoryDatabase(string.IsNullOrWhiteSpace(databaseName) ? "RoomReservation" : databaseName));
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
@@ -51,7 +52,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-if (app.Configuration.GetValue("Seed:Enabled", true))
+if (app.Configuration.GetValue("Seed:Enabled", false))
 {
     using var scope = app.Services.CreateScope();
     await DbSeeder.SeedAsync(

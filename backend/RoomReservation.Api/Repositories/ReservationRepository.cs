@@ -19,7 +19,11 @@ public interface IReservationRepository : IRepository<Reservation>
     /// <summary>The organizer already has another non-cancelled reservation overlapping [start, end).</summary>
     Task<bool> HasUserOverlapAsync(Guid userId, DateTimeOffset start, DateTimeOffset end, Guid? excludeId, CancellationToken ct = default);
 
-    /// <summary>Number of Booked reservations per organizer. Users without any are absent from the result.</summary>
+    /// <summary>
+    /// Number of Booked reservations per organizer. Users without any are absent from the result.
+    /// A booking whose end has passed still counts until <see cref="CompleteElapsedAsync"/> runs, so callers
+    /// should complete elapsed reservations first.
+    /// </summary>
     Task<IReadOnlyDictionary<Guid, int>> CountActiveByUserAsync(CancellationToken ct = default);
 
     /// <summary>Marks every Booked reservation whose planned end has passed as Completed.</summary>
@@ -31,6 +35,8 @@ public sealed class ReservationRepository(AppDbContext db) : Repository<Reservat
     public Task<Reservation?> GetWithDetailsAsync(Guid id, CancellationToken ct = default) =>
         Db.Reservations.Include(r => r.Room).Include(r => r.User).FirstOrDefaultAsync(r => r.Id == id, ct);
 
+    // Read-only: the list is AsNoTracking, so never mutate these entities and pass them to UpdateAsync
+    // (that would re-attach the Room/User graph). Load via GetWithDetailsAsync or GetByIdAsync to change one.
     public async Task<IReadOnlyList<Reservation>> ListAsync(ReservationFilter filter, CancellationToken ct = default)
     {
         var query = Db.Reservations.AsNoTracking().Include(r => r.Room).Include(r => r.User).AsQueryable();
@@ -50,9 +56,10 @@ public sealed class ReservationRepository(AppDbContext db) : Repository<Reservat
             query = query.Where(r => r.Status == status);
         }
 
+        // Half-open window [From, To): same interval semantics as the overlap checks (an early end shortens the meeting).
         if (filter.From is { } from)
         {
-            query = query.Where(r => r.End > from);
+            query = query.Where(r => (r.EndedAt ?? r.End) > from);
         }
 
         if (filter.To is { } to)

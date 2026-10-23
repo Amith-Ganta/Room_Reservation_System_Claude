@@ -19,6 +19,11 @@ public abstract class Repository<T>(AppDbContext context) : IRepository<T> where
         await Db.SaveChangesAsync(ct);
     }
 
+    /// <summary>
+    /// Saves changes to an entity. Mutate an entity loaded with GetByIdAsync / GetWithDetailsAsync, never one from an
+    /// AsNoTracking list. Note: the InMemory provider enforces neither HasMaxLength nor foreign keys, so those
+    /// constraints must be validated in the services.
+    /// </summary>
     public async Task UpdateAsync(T entity, CancellationToken ct = default)
     {
         Db.Set<T>().Update(entity);

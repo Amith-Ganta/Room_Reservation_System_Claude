@@ -131,8 +131,9 @@ public static class DbSeeder
 
         Add("Lecture Hall", "Lucas", "Internal training", -6, 8, 3, 35, done);
 
-        // Upcoming (all valid under R1-R7). The first one is later today, so the demo has a reservation to cancel
-        // that is not a day away. Its room and organizer have nothing else near that time.
+        // Upcoming (all valid under R1-R7). The first one starts an hour from now (rounded down to the minute, so
+        // always in the future), giving the demo a reservation to cancel that is not a day away. Near midnight it
+        // falls on tomorrow; either way its room and organizer have nothing else near that time.
         var laterToday = now.AddHours(1);
         laterToday = new DateTimeOffset(laterToday.Year, laterToday.Month, laterToday.Day, laterToday.Hour, laterToday.Minute, 0, TimeSpan.Zero);
         AddAt("Focus Pod", "Lucas", "Project check-in", laterToday, 60, 2, booked);

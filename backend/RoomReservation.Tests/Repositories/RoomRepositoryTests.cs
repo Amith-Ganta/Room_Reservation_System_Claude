@@ -39,6 +39,16 @@ public class RoomRepositoryTests
     }
 
     [Fact]
+    public async Task Floor_zero_is_a_real_filter_not_ignored()
+    {
+        var repo = await RepoWithRoomsAsync();
+
+        var rooms = await repo.ListAsync(new RoomFilter { Floor = 0 });
+
+        rooms.Select(r => r.Name).Should().Equal("Bare");
+    }
+
+    [Fact]
     public async Task Floor_filter_matches_exactly()
     {
         var repo = await RepoWithRoomsAsync();
@@ -91,13 +101,16 @@ public class RoomRepositoryTests
     [Fact]
     public async Task Add_get_and_update_round_trip()
     {
-        var repo = new RoomRepository(TestDb.Create());
+        var name = TestDb.NewName();
+        var repo = new RoomRepository(TestDb.Create(name));
         var room = TestDb.Room("Round trip", capacity: 5);
 
         await repo.AddAsync(room);
         room.Capacity = 9;
         await repo.UpdateAsync(room);
-        var loaded = await repo.GetByIdAsync(room.Id);
+
+        // A second context on the same database only sees what was actually saved.
+        var loaded = await new RoomRepository(TestDb.Create(name)).GetByIdAsync(room.Id);
 
         loaded.Should().NotBeNull();
         loaded!.Capacity.Should().Be(9);
