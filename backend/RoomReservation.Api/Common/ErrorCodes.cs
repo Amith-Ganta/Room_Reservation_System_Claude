@@ -13,6 +13,7 @@ public static class ErrorCodes
 
     public const string InvalidTimeRange = "INVALID_TIME_RANGE";
     public const string TitleRequired = "TITLE_REQUIRED";
+    public const string TitleTooLong = "TITLE_TOO_LONG";
     public const string InvalidAttendees = "INVALID_ATTENDEES";
     public const string RoomNotFound = "ROOM_NOT_FOUND";
     public const string UserNotFound = "USER_NOT_FOUND";

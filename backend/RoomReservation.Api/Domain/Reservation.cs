@@ -2,6 +2,8 @@ namespace RoomReservation.Api.Domain;
 
 public class Reservation
 {
+    public const int TitleMaxLength = 200;
+
     public Guid Id { get; set; }
     public Guid RoomId { get; set; }
     public Room Room { get; set; } = null!;

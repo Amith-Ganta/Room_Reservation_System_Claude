@@ -32,6 +32,8 @@ builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IReservationValidator, ReservationValidator>();
+builder.Services.AddScoped<ReservationLifecycle>();
 
 builder.Services
     .AddControllers()

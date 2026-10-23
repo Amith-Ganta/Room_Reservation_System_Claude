@@ -27,7 +27,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Reservation>(reservation =>
         {
             reservation.HasKey(r => r.Id);
-            reservation.Property(r => r.Title).IsRequired().HasMaxLength(200);
+            reservation.Property(r => r.Title).IsRequired().HasMaxLength(Reservation.TitleMaxLength);
             reservation.HasOne(r => r.Room).WithMany().HasForeignKey(r => r.RoomId).OnDelete(DeleteBehavior.Restrict);
             reservation.HasOne(r => r.User).WithMany().HasForeignKey(r => r.UserId).OnDelete(DeleteBehavior.Restrict);
         });
