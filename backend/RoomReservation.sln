@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoomReservation.Api", "RoomReservation.Api\RoomReservation.Api.csproj", "{F6E5E2FD-DAD7-4AB5-8EDE-CB937A93E621}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoomReservation.Tests", "RoomReservation.Tests\RoomReservation.Tests.csproj", "{3A307322-175A-4526-8879-B6CEC708107E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F6E5E2FD-DAD7-4AB5-8EDE-CB937A93E621}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6E5E2FD-DAD7-4AB5-8EDE-CB937A93E621}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6E5E2FD-DAD7-4AB5-8EDE-CB937A93E621}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6E5E2FD-DAD7-4AB5-8EDE-CB937A93E621}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A307322-175A-4526-8879-B6CEC708107E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A307322-175A-4526-8879-B6CEC708107E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A307322-175A-4526-8879-B6CEC708107E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A307322-175A-4526-8879-B6CEC708107E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

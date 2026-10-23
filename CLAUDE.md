@@ -42,7 +42,7 @@ frontend/            React + TS app (src/api, src/pages, src/components, src/lib
 
 | Spec | Name | Status |
 |------|------|--------|
-| 01 | project-setup | pending |
+| 01 | project-setup | in review |
 | 02 | domain-data-seeder | pending |
 | 03 | rooms-api | pending |
 | 04 | booking-rules | pending |
