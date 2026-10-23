@@ -19,7 +19,7 @@ Query: `minCapacity` (int), `equipment` (comma-separated, e.g. `Projector,Whiteb
 { "id": "guid", "name": "Atlas", "capacity": 12, "floor": 2,
   "equipment": ["Projector", "Whiteboard"], "isActive": true }
 ```
-Status is an enum rendered as a string; equipment is a list, never a flags integer.
+Equipment is a list of names, never a flags integer. Rooms are ordered by floor, then name.
 
 ## Files to create
 `Dtos/RoomDto.cs`, `Mapping/MappingProfile.cs` (Room map), `Services/RoomService.cs`,
@@ -31,7 +31,9 @@ AutoMapper 14.0.0.
 
 ## Rules for implementation
 1. Controller has no logic: bind filter, call service, return.
-2. Unknown equipment value or negative capacity -> 400 `INVALID_REQUEST`.
+2. Unknown equipment name (numbers and `None` included), a negative `minCapacity` or a non-numeric value -> 400 `INVALID_REQUEST`,
+   raised by model validation on the query class, before the service runs. `floor` may be any integer (0 = ground, negative = basement).
+   Equipment names are case-insensitive; repeated names are allowed.
 3. Inactive rooms are returned (the UI shows them); booking is blocked later by R7.
 
 ## Definition of done

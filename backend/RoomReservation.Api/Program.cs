@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using RoomReservation.Api.Common;
 using RoomReservation.Api.Configuration;
 using RoomReservation.Api.Data;
+using RoomReservation.Api.Mapping;
 using RoomReservation.Api.Repositories;
+using RoomReservation.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +29,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
+
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+builder.Services.AddScoped<IRoomService, RoomService>();
 
 builder.Services
     .AddControllers()
