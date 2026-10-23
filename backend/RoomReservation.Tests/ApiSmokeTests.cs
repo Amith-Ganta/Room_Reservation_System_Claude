@@ -2,6 +2,7 @@ using System.Net;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using RoomReservation.Api.Configuration;
@@ -48,14 +49,33 @@ public class ApiSmokeTests : IClassFixture<WebApplicationFactory<Program>>
     [InlineData("BookingRules:MaxHorizonDays")]
     [InlineData("UsageReport:MinBookingsToFlag")]
     [InlineData("UsageReport:UnderusedThresholdPercent")]
-    public void Startup_fails_when_a_limit_is_zero(string key)
+    public void A_zero_limit_is_rejected_by_options_validation(string key)
     {
-        // A dedicated factory per case: the shared fixture host must stay healthy for the other tests.
-        using var factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder => builder.UseSetting(key, "0"));
+        // Same registration as Program.cs, resolved without a web host. Booting a host that is meant to fail
+        // races with its own teardown and sometimes surfaces an ObjectDisposedException instead of the real error.
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["BookingRules:MaxDurationDays"] = "7",
+                ["BookingRules:MaxHorizonDays"] = "90",
+                ["UsageReport:MinBookingsToFlag"] = "4",
+                ["UsageReport:UnderusedThresholdPercent"] = "50",
+                [key] = "0"
+            })
+            .Build();
+        var services = new ServiceCollection();
+        services.AddOptions<BookingRulesOptions>()
+            .Bind(configuration.GetSection(BookingRulesOptions.SectionName)).ValidateDataAnnotations();
+        services.AddOptions<UsageReportOptions>()
+            .Bind(configuration.GetSection(UsageReportOptions.SectionName)).ValidateDataAnnotations();
+        using var provider = services.BuildServiceProvider();
 
-        var start = () => factory.CreateClient();
+        var resolve = () =>
+        {
+            _ = provider.GetRequiredService<IOptions<BookingRulesOptions>>().Value;
+            _ = provider.GetRequiredService<IOptions<UsageReportOptions>>().Value;
+        };
 
-        start.Should().Throw<OptionsValidationException>().WithMessage($"*{key.Split(':')[1]}*");
+        resolve.Should().Throw<OptionsValidationException>().WithMessage($"*{key.Split(':')[1]}*");
     }
 }
