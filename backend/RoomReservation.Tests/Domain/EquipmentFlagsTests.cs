@@ -22,4 +22,31 @@ public class EquipmentFlagsTests
         EquipmentFlags.Combine([]).Should().Be(Equipment.None);
         EquipmentFlags.Combine([Equipment.TvScreen, Equipment.TvScreen]).Should().Be(Equipment.TvScreen);
     }
+
+    [Theory]
+    [InlineData(null, Equipment.None)]
+    [InlineData("", Equipment.None)]
+    [InlineData("   ", Equipment.None)]
+    [InlineData("Projector", Equipment.Projector)]
+    [InlineData("projector, WHITEBOARD", Equipment.Projector | Equipment.Whiteboard)]
+    [InlineData("TvScreen,TvScreen", Equipment.TvScreen)]
+    public void TryParseList_accepts_names_case_insensitively(string? text, Equipment expected)
+    {
+        EquipmentFlags.TryParseList(text, out var parsed).Should().BeTrue();
+        parsed.Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("Laser")]
+    [InlineData("None")]
+    [InlineData("1")]
+    [InlineData("15")]
+    [InlineData("Projector,")]
+    [InlineData("Projector,Laser")]
+    [InlineData(",")]
+    public void TryParseList_rejects_unknown_names_numbers_and_none(string text)
+    {
+        EquipmentFlags.TryParseList(text, out var parsed).Should().BeFalse();
+        parsed.Should().Be(Equipment.None);
+    }
 }
