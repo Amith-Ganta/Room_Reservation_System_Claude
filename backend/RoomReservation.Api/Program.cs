@@ -20,8 +20,18 @@ builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services
     .AddControllers()
-    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()))
-    .ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = InvalidModelStateResponse.Create);
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
+        // Malformed JSON must not echo System.Text.Json internals back to the client.
+        options.AllowInputFormatterExceptionMessages = false;
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = InvalidModelStateResponse.Create;
+        // Keep a single error shape: no ProblemDetails for 404/405/415.
+        options.SuppressMapClientErrors = true;
+    });
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
@@ -31,6 +41,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// Unhandled exceptions are logged by the middleware; the client only gets the standard error body.
+app.UseExceptionHandler(errorApp => errorApp.Run(context =>
+{
+    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    return context.Response.WriteAsJsonAsync(new ApiErrorResponse(
+        [new ApiError(ErrorCodes.InternalError, "An unexpected error occurred.")]));
+}));
 
 if (app.Environment.IsDevelopment())
 {

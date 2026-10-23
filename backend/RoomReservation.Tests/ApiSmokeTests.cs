@@ -29,6 +29,7 @@ public class ApiSmokeTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var rules = _factory.Services.GetRequiredService<IOptions<BookingRulesOptions>>().Value;
 
+        // These literals intentionally mirror appsettings.json: the test proves the binding, not the rule.
         rules.MaxDurationDays.Should().Be(7);
         rules.MaxHorizonDays.Should().Be(90);
     }
@@ -55,6 +56,6 @@ public class ApiSmokeTests : IClassFixture<WebApplicationFactory<Program>>
 
         var start = () => factory.CreateClient();
 
-        start.Should().Throw<OptionsValidationException>();
+        start.Should().Throw<OptionsValidationException>().WithMessage($"*{key.Split(':')[1]}*");
     }
 }

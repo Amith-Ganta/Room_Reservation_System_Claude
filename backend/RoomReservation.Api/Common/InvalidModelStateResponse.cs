@@ -20,7 +20,9 @@ public static class InvalidModelStateResponse
         return new BadRequestObjectResult(new ApiErrorResponse(errors));
     }
 
-    // Binding failures can carry a technical exception message; show a neutral one instead.
+    // Binding failures carry the raw System.Text.Json message (type names, byte positions); never show it.
     private static string Describe(ModelError error) =>
-        string.IsNullOrEmpty(error.ErrorMessage) ? "The value is invalid." : error.ErrorMessage;
+        error.Exception is not null || string.IsNullOrEmpty(error.ErrorMessage)
+            ? "The value is invalid."
+            : error.ErrorMessage;
 }

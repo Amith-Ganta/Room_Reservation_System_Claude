@@ -1,7 +1,5 @@
 namespace RoomReservation.Api.Common;
 
-public sealed record ApiError(string Code, string Message);
-
 public enum ResultStatus
 {
     Ok,
@@ -30,7 +28,16 @@ public sealed class Result<T>
 
     public static Result<T> Ok(T value) => new(ResultStatus.Ok, value, Array.Empty<ApiError>());
 
-    public static Result<T> Invalid(IReadOnlyList<ApiError> errors) => new(ResultStatus.Invalid, default, errors);
+    public static Result<T> Invalid(IReadOnlyList<ApiError> errors)
+    {
+        // An Invalid result without errors is a programming mistake, not an expected failure.
+        if (errors.Count == 0)
+        {
+            throw new ArgumentException("An invalid result needs at least one error.", nameof(errors));
+        }
+
+        return new(ResultStatus.Invalid, default, errors);
+    }
 
     public static Result<T> NotFound(ApiError error) => new(ResultStatus.NotFound, default, [error]);
 

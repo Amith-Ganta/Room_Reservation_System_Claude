@@ -23,4 +23,5 @@ public static class ErrorCodes
     public const string NotStarted = "RESERVATION_NOT_STARTED";
 
     public const string InvalidRequest = "INVALID_REQUEST";
+    public const string InternalError = "INTERNAL_ERROR";
 }
