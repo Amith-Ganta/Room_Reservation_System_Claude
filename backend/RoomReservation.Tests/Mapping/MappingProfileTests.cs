@@ -54,4 +54,47 @@ public class MappingProfileTests
     {
         Mapper.Map<RoomFilter>(new RoomListQuery { Equipment = equipment }).Equipment.Should().BeNull();
     }
+
+    [Fact]
+    public void Reservation_is_mapped_with_room_name_organizer_name_and_status_text()
+    {
+        var room = TestDb.Room("Atlas");
+        var user = TestDb.User("Ann", "Lee");
+        var endedAt = TestDb.Now.AddHours(1);
+        var reservation = TestDb.Reservation(room, user, TestDb.Now, TimeSpan.FromHours(2), ReservationStatus.Completed, endedAt);
+        reservation.Room = room;
+        reservation.User = user;
+
+        var dto = Mapper.Map<ReservationDto>(reservation);
+
+        dto.Should().BeEquivalentTo(new ReservationDto(
+            reservation.Id, room.Id, "Atlas", user.Id, "Ann Lee", "Meeting",
+            reservation.Start, reservation.End, endedAt, 2, "Completed"));
+    }
+
+    [Fact]
+    public void Reservation_query_is_mapped_to_a_filter()
+    {
+        var roomId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var from = TestDb.Now;
+        var to = TestDb.Now.AddDays(1);
+
+        var filter = Mapper.Map<ReservationFilter>(new ReservationListQuery
+        {
+            RoomId = roomId, UserId = userId, Status = "cancelled", From = from, To = to
+        });
+
+        filter.RoomId.Should().Be(roomId);
+        filter.UserId.Should().Be(userId);
+        filter.Status.Should().Be(ReservationStatus.Cancelled);
+        filter.From.Should().Be(from);
+        filter.To.Should().Be(to);
+    }
+
+    [Fact]
+    public void Reservation_query_without_a_status_gives_no_status_filter()
+    {
+        Mapper.Map<ReservationFilter>(new ReservationListQuery()).Status.Should().BeNull();
+    }
 }

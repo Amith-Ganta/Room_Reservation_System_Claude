@@ -57,6 +57,12 @@ public sealed class ReservationRepository(AppDbContext db) : Repository<Reservat
         }
 
         // Half-open window [From, To): same interval semantics as the overlap checks (an early end shortens the meeting).
+        // From == To is an empty window, so nothing matches (the spec allows equal values).
+        if (filter is { From: { } start, To: { } stop } && start >= stop)
+        {
+            return [];
+        }
+
         if (filter.From is { } from)
         {
             query = query.Where(r => (r.EndedAt ?? r.End) > from);
