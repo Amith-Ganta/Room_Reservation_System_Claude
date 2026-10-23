@@ -47,7 +47,7 @@ frontend/            React + TS app (src/api, src/pages, src/components, src/lib
 | 03 | rooms-api | merged |
 | 04 | booking-rules | merged |
 | 05 | reservations-api | merged |
-| 06 | users-api | in progress |
+| 06 | users-api | merged |
 | 07 | usage-report | pending |
 | 08 | frontend-scaffold-rooms | pending |
 | 09 | users-page | pending |
