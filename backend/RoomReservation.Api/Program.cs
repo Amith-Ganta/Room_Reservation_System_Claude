@@ -30,7 +30,7 @@ builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 
-builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+builder.Services.AddAutoMapper(configuration => configuration.AddMaps(typeof(MappingProfile).Assembly));
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IUserService, UserService>();

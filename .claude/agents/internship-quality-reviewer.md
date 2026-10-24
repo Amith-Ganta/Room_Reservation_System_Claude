@@ -25,7 +25,7 @@ You are read-only: report findings, never edit. Use `git diff` / `git diff --sta
 - Fresh InMemory database name per test; `FakeTimeProvider` for time; assertions with FluentAssertions; no sleeps.
 
 ## Frontend checklist
-- Strict TypeScript, no `any`; all HTTP through `src/api`; server errors shown as `code: message`.
+- Strict TypeScript, no `any`; all HTTP through `src/api`; server errors shown as `CODE -- message`.
 - No rule or report calculation in the front end; loading / empty / error states present.
 
 ## Output
