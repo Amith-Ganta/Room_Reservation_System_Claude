@@ -43,6 +43,20 @@ function toWholeNumber(text: string): number | undefined {
   return /^-?\d+$/.test(trimmed) ? Number(trimmed) : undefined
 }
 
+/** Minimum capacity must be a whole number >= 1. */
+function toCapacity(text: string): number | undefined {
+  const value = toWholeNumber(text)
+  return value !== undefined && value >= 1 ? value : undefined
+}
+
+function isBadCapacity(text: string): boolean {
+  return text.trim() !== '' && toCapacity(text) === undefined
+}
+
+function isBadFloor(text: string): boolean {
+  return text.trim() !== '' && toWholeNumber(text) === undefined
+}
+
 export function RoomsPage() {
   const [typed, setTyped] = useState<TextFilters>(NO_TEXT_FILTERS)
   const [equipment, setEquipment] = useState<EquipmentName[]>([])
@@ -55,7 +69,14 @@ export function RoomsPage() {
   const [errors, setErrors] = useState<ApiErrorItem[]>([])
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setApplied(typed), TYPING_DELAY_MS)
+    // Keep the previous object when nothing changed, so typing and deleting does not refetch.
+    const timer = window.setTimeout(
+      () =>
+        setApplied((previous) =>
+          previous.minCapacity === typed.minCapacity && previous.floor === typed.floor ? previous : typed,
+        ),
+      TYPING_DELAY_MS,
+    )
     return () => window.clearTimeout(timer)
   }, [typed])
 
@@ -63,17 +84,20 @@ export function RoomsPage() {
     // Aborting the previous request means an older response can never replace a newer one.
     const controller = new AbortController()
     setLoading(true)
+    setErrors([])
     listRooms(
       {
-        minCapacity: toWholeNumber(applied.minCapacity),
+        minCapacity: toCapacity(applied.minCapacity),
         floor: toWholeNumber(applied.floor),
         equipment,
       },
       controller.signal,
     )
       .then((result) => {
+        if (controller.signal.aborted) {
+          return
+        }
         setRooms(result)
-        setErrors([])
         setLoading(false)
       })
       .catch((error: unknown) => {
@@ -90,8 +114,6 @@ export function RoomsPage() {
       })
     return () => controller.abort()
   }, [applied, equipment])
-
-  const hasFilters = typed.minCapacity !== '' || typed.floor !== '' || equipment.length > 0
 
   function clearFilters() {
     setTyped(NO_TEXT_FILTERS)
@@ -113,6 +135,8 @@ export function RoomsPage() {
             size="small"
             value={typed.minCapacity}
             onChange={(event) => setTyped({ ...typed, minCapacity: event.target.value })}
+            error={isBadCapacity(typed.minCapacity)}
+            helperText={isBadCapacity(typed.minCapacity) ? 'Enter a whole number, 1 or more' : undefined}
             slotProps={{ htmlInput: { min: 1, step: 1 } }}
             sx={{ width: { md: 180 } }}
           />
@@ -143,10 +167,12 @@ export function RoomsPage() {
             size="small"
             value={typed.floor}
             onChange={(event) => setTyped({ ...typed, floor: event.target.value })}
+            error={isBadFloor(typed.floor)}
+            helperText={isBadFloor(typed.floor) ? 'Enter a whole number' : undefined}
             slotProps={{ htmlInput: { step: 1 } }}
             sx={{ width: { md: 120 } }}
           />
-          <Button onClick={clearFilters} disabled={!hasFilters}>
+          <Button onClick={clearFilters}>
             Clear filters
           </Button>
         </Stack>

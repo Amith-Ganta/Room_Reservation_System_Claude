@@ -13,6 +13,14 @@ export class ApiError extends Error {
   }
 }
 
+const GATEWAY_STATUSES = new Set([502, 503, 504])
+
+function networkError(): ApiError {
+  return new ApiError(0, [
+    { code: 'NETWORK_ERROR', message: 'Cannot reach the server. Check that the API is running.' },
+  ])
+}
+
 function isErrorItem(value: unknown): value is ApiErrorItem {
   if (typeof value !== 'object' || value === null) {
     return false
@@ -68,15 +76,17 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw error
     }
-    throw new ApiError(0, [
-      { code: 'NETWORK_ERROR', message: 'Cannot reach the server. Check that the API is running.' },
-    ])
+    throw networkError()
   }
 
   const payload = await readJson(response)
   if (!response.ok) {
     if (isErrorBody(payload)) {
       throw new ApiError(response.status, payload.errors)
+    }
+    // A dev proxy (or gateway) answers 502/503/504 with no API error body when the backend is down.
+    if (GATEWAY_STATUSES.has(response.status)) {
+      throw networkError()
     }
     throw new ApiError(response.status, [
       {

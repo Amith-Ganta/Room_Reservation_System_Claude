@@ -2,7 +2,7 @@
 export type EquipmentName = 'Projector' | 'TvScreen' | 'VideoConferencing' | 'Whiteboard'
 
 export interface RoomDto {
-  id: number
+  id: string
   name: string
   capacity: number
   floor: number
