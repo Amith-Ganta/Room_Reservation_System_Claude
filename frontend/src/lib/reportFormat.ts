@@ -1,8 +1,10 @@
 import type { RoomUsageDto, UsageReportDto } from '../api/types'
 import { formatDateTime } from './dateTime'
 
-/** Display text for the usage report, shared by the page and the PDF so both show the same words. */
-/** Nothing here decides a flag or a number: the values were calculated by the API. */
+/**
+ * Display text for the usage report, shared by the page and the PDF so both show the same words.
+ * Nothing here decides a flag or a number: the values were calculated by the API.
+ */
 
 export const FLAG_LABEL = 'Often booked, rarely used'
 
@@ -18,6 +20,11 @@ export const REPORT_COLUMNS = [
   'Utilization',
   'Flag',
 ] as const
+
+/** Columns 1 to 8 (Floor to Utilization) are numbers; the page and the PDF right-align them. */
+export function isNumericColumn(index: number): boolean {
+  return index >= 1 && index <= 8
+}
 
 export function formatHours(hours: number): string {
   return hours.toFixed(2)
@@ -74,12 +81,15 @@ export function roomRowText(room: RoomUsageDto): string[] {
   ]
 }
 
-/** File name date: the local day of `generatedAt`, so the export needs no clock of its own. */
-export function reportFileDate(report: UsageReportDto): string {
+/**
+ * PDF file name. The date is the local day of `generatedAt`, so the export needs no clock of its own;
+ * without a valid date the name has no date part.
+ */
+export function reportFileName(report: UsageReportDto): string {
   const date = new Date(report.generatedAt)
   if (Number.isNaN(date.getTime())) {
-    return 'report'
+    return 'room-usage-report.pdf'
   }
   const pad = (value: number) => String(value).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+  return `room-usage-report-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.pdf`
 }

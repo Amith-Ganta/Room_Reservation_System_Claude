@@ -2,18 +2,15 @@ import type { UsageReportDto } from '../api/types'
 import {
   generatedText,
   periodText,
+  isNumericColumn,
   REPORT_COLUMNS,
-  reportFileDate,
+  reportFileName,
   roomRowText,
   thresholdsText,
 } from './reportFormat'
 
 /** Light amber fill for flagged rows. jsPDF cannot read the MUI theme, so this is the one literal colour. */
 const FLAGGED_ROW_FILL: [number, number, number] = [255, 243, 205]
-
-/** Columns 1 to 8 are numbers and are right-aligned, like on the screen. */
-const FIRST_NUMERIC_COLUMN = 1
-const LAST_NUMERIC_COLUMN = 8
 
 /**
  * Builds the PDF from the report that is already on screen and saves it. The libraries are loaded here, on demand,
@@ -30,12 +27,15 @@ export async function exportReportPdf(report: UsageReportDto): Promise<void> {
   doc.setFontSize(10)
   doc.text(generatedText(report), margin, 25)
   doc.text(`Period: ${periodText(report)}`, margin, 30)
-  doc.text(thresholdsText(report), margin, 35)
+  const pageContentWidth = doc.internal.pageSize.getWidth() - 2 * margin
+  doc.text(doc.splitTextToSize(thresholdsText(report), pageContentWidth), margin, 35)
 
   const numericColumns: Record<number, { halign: 'right' }> = {}
-  for (let column = FIRST_NUMERIC_COLUMN; column <= LAST_NUMERIC_COLUMN; column += 1) {
-    numericColumns[column] = { halign: 'right' }
-  }
+  REPORT_COLUMNS.forEach((_, column) => {
+    if (isNumericColumn(column)) {
+      numericColumns[column] = { halign: 'right' }
+    }
+  })
 
   autoTable(doc, {
     startY: 40,
@@ -62,5 +62,5 @@ export async function exportReportPdf(report: UsageReportDto): Promise<void> {
     doc.text(`Page ${page} of ${pageCount}`, pageWidth - margin, pageHeight - 8, { align: 'right' })
   }
 
-  doc.save(`room-usage-report-${reportFileDate(report)}.pdf`)
+  doc.save(reportFileName(report))
 }

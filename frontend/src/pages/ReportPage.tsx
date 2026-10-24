@@ -23,12 +23,14 @@ import { getUsageReport } from '../api/reports'
 import type { ApiErrorItem, UsageReportDto } from '../api/types'
 import { ErrorAlert } from '../components/ErrorAlert'
 import { LoadingIndicator } from '../components/LoadingIndicator'
+import { toIsoWithOffset } from '../lib/dateTime'
 import { exportReportPdf } from '../lib/exportReportPdf'
 import {
   FLAG_LABEL,
   formatHours,
   formatUtilization,
   generatedText,
+  isNumericColumn,
   periodText,
   REPORT_COLUMNS,
   thresholdsText,
@@ -39,11 +41,17 @@ function dayBoundary(day: string, endOfDay: boolean): string | undefined {
   if (day === '') {
     return undefined
   }
-  const date = new Date(`${day}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}`)
-  return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
+  return toIsoWithOffset(`${day}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}`)
 }
 
-const NUMERIC_COLUMNS = 8
+/** A filled date input that cannot be turned into a timestamp (for example a six-digit year). */
+function isInvalidDay(day: string): boolean {
+  return day !== '' && dayBoundary(day, false) === undefined
+}
+
+/** Keeps the date pickers to four-digit years. */
+const DAY_INPUT_RANGE = { min: '1900-01-01', max: '2999-12-31' }
+const INVALID_DAY_TEXT = 'Enter a valid date.'
 
 export function ReportPage() {
   const theme = useTheme()
@@ -56,6 +64,8 @@ export function ReportPage() {
   const [exportFailed, setExportFailed] = useState(false)
   // Changing this value re-runs the load effect (Retry button).
   const [reloadCount, setReloadCount] = useState(0)
+  // True from a Retry click until that load ends, so the button shows "Retrying…" only for a retry.
+  const [retryRequested, setRetryRequested] = useState(false)
 
   useEffect(() => {
     // Aborting on a new range, retry or unmount means a late response never replaces a newer one.
@@ -69,6 +79,7 @@ export function ReportPage() {
         }
         setReport(result)
         setLoading(false)
+        setRetryRequested(false)
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) {
@@ -82,16 +93,17 @@ export function ReportPage() {
             : [{ code: 'UNEXPECTED_ERROR', message: 'Something unexpected happened. Please try again.' }],
         )
         setLoading(false)
+        setRetryRequested(false)
       })
     return () => controller.abort()
   }, [fromDay, toDay, reloadCount])
 
   // After a click the button stays mounted until the retry finishes, so the keyboard focus is not lost.
-  const showRetry = errors.length > 0 || (loading && reloadCount > 0)
-  const canExport = !loading && !exporting && report !== null && report.rooms.length > 0
+  const showRetry = errors.length > 0 || (loading && retryRequested)
+  const hasRows = !loading && report !== null && report.rooms.length > 0
 
   async function handleExport() {
-    if (!canExport || report === null) {
+    if (!hasRows || exporting || report === null) {
       return
     }
     setExporting(true)
@@ -118,7 +130,9 @@ export function ReportPage() {
           size="small"
           value={fromDay}
           onChange={(event) => setFromDay(event.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
+          error={isInvalidDay(fromDay)}
+          helperText={isInvalidDay(fromDay) ? INVALID_DAY_TEXT : undefined}
+          slotProps={{ inputLabel: { shrink: true }, htmlInput: DAY_INPUT_RANGE }}
         />
         <TextField
           label="To"
@@ -126,7 +140,9 @@ export function ReportPage() {
           size="small"
           value={toDay}
           onChange={(event) => setToDay(event.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
+          error={isInvalidDay(toDay)}
+          helperText={isInvalidDay(toDay) ? INVALID_DAY_TEXT : undefined}
+          slotProps={{ inputLabel: { shrink: true }, htmlInput: DAY_INPUT_RANGE }}
         />
         <Button
           variant="text"
@@ -139,8 +155,13 @@ export function ReportPage() {
           Clear
         </Button>
         <Box sx={{ flexGrow: 1 }} />
-        {/* aria-disabled (not disabled) keeps keyboard focus on the button while the PDF is prepared. */}
-        <Button variant="contained" aria-disabled={!canExport} onClick={() => void handleExport()}>
+        {/* Truly disabled when there is nothing to export; aria-disabled while preparing keeps keyboard focus. */}
+        <Button
+          variant="contained"
+          disabled={!hasRows}
+          aria-disabled={exporting}
+          onClick={() => void handleExport()}
+        >
           {exporting ? 'Preparing…' : 'Export PDF'}
         </Button>
       </Stack>
@@ -154,6 +175,7 @@ export function ReportPage() {
             aria-disabled={loading}
             onClick={() => {
               if (!loading) {
+                setRetryRequested(true)
                 setReloadCount((count) => count + 1)
               }
             }}
@@ -163,7 +185,7 @@ export function ReportPage() {
         </div>
       )}
 
-      {report !== null && (
+      {report !== null && !loading && (
         <Box>
           <Typography variant="body2">{thresholdsText(report)}</Typography>
           <Typography variant="body2" color="text.secondary">
@@ -177,7 +199,7 @@ export function ReportPage() {
           <TableHead>
             <TableRow>
               {REPORT_COLUMNS.map((column, index) => (
-                <TableCell key={column} align={index >= 1 && index <= NUMERIC_COLUMNS ? 'right' : 'left'}>
+                <TableCell key={column} align={isNumericColumn(index) ? 'right' : 'left'}>
                   {column}
                 </TableCell>
               ))}
@@ -232,7 +254,15 @@ export function ReportPage() {
         </Table>
       </TableContainer>
 
-      <Snackbar open={exportFailed} autoHideDuration={6000} onClose={() => setExportFailed(false)}>
+      <Snackbar
+        open={exportFailed}
+        autoHideDuration={6000}
+        onClose={(_event, reason) => {
+          if (reason !== 'clickaway') {
+            setExportFailed(false)
+          }
+        }}
+      >
         <Alert severity="error" onClose={() => setExportFailed(false)}>
           The PDF could not be created.
         </Alert>
