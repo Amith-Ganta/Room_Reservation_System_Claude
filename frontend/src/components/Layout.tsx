@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { to: '/rooms', label: 'Rooms' },
   { to: '/users', label: 'Users' },
   { to: '/reservations', label: 'Reservations' },
+  { to: '/calendar', label: 'Calendar' },
 ]
 
 export function Layout() {
