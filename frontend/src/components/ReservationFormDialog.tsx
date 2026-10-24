@@ -32,9 +32,18 @@ interface FieldMessages {
   attendees?: string
 }
 
+/** Starting values for a new reservation (for example from a calendar slot); start and end are ISO timestamps. */
+export interface ReservationPrefill {
+  roomId?: string
+  start?: string
+  end?: string
+}
+
 interface ReservationFormDialogProps {
   /** The reservation to change, or null to create a new one. */
   reservation: ReservationDto | null
+  /** Used only when `reservation` is null. */
+  prefill?: ReservationPrefill
   rooms: RoomDto[]
   users: UserDto[]
   onClose: () => void
@@ -43,9 +52,16 @@ interface ReservationFormDialogProps {
   onStale: () => void
 }
 
-function initialValues(reservation: ReservationDto | null): FormValues {
+function initialValues(reservation: ReservationDto | null, prefill: ReservationPrefill | undefined): FormValues {
   if (reservation === null) {
-    return { roomId: '', userId: '', title: '', start: '', end: '', attendees: '' }
+    return {
+      roomId: prefill?.roomId ?? '',
+      userId: '',
+      title: '',
+      start: prefill?.start === undefined ? '' : toLocalInputValue(prefill.start),
+      end: prefill?.end === undefined ? '' : toLocalInputValue(prefill.end),
+      attendees: '',
+    }
   }
   return {
     roomId: reservation.roomId,
@@ -67,6 +83,7 @@ function toWholeNumber(text: string): number | undefined {
 /** Create or change dialog. Render it only while it is open: each opening starts from the reservation (or empty). */
 export function ReservationFormDialog({
   reservation,
+  prefill,
   rooms,
   users,
   onClose,
@@ -74,7 +91,7 @@ export function ReservationFormDialog({
   onStale,
 }: ReservationFormDialogProps) {
   const editing = reservation !== null
-  const [values, setValues] = useState<FormValues>(() => initialValues(reservation))
+  const [values, setValues] = useState<FormValues>(() => initialValues(reservation, prefill))
   const [fieldMessages, setFieldMessages] = useState<FieldMessages>({})
   const [errors, setErrors] = useState<ApiErrorItem[]>([])
   const [saving, setSaving] = useState(false)
