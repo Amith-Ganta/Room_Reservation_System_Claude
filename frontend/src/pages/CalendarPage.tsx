@@ -18,6 +18,9 @@ import { toErrorItems } from '../lib/errors'
 
 const PLUGINS = [dayGridPlugin, timeGridPlugin, interactionPlugin]
 
+/** One shared empty list, so the `events` prop keeps the same identity while a room is loading. */
+const NO_RESERVATIONS: ReservationDto[] = []
+
 /** The visible range exactly as FullCalendar reports it: `start` inclusive, `end` exclusive, as ISO timestamps. */
 interface VisibleRange {
   start: string
@@ -137,6 +140,8 @@ export function CalendarPage() {
   // replaces a newer one.
   useEffect(() => {
     if (roomId === '' || rangeStart === undefined || rangeEnd === undefined) {
+      // A request aborted by the cleanup must not leave the progress bar on.
+      setLoading(false)
       return
     }
     const controller = new AbortController()
@@ -161,7 +166,7 @@ export function CalendarPage() {
     return () => controller.abort()
   }, [roomId, rangeStart, rangeEnd, reloadCount])
 
-  const reservations = loaded.roomId === roomId ? loaded.items : []
+  const reservations = loaded.roomId === roomId ? loaded.items : NO_RESERVATIONS
 
   const events = useMemo<EventInput[]>(() => {
     const { palette } = theme
@@ -322,7 +327,8 @@ export function CalendarPage() {
               scrollTime="07:00:00"
               nowIndicator
               allDaySlot={false}
-              height="auto"
+              // A fixed height makes the time grid scroll inside its own box, which is what lets `scrollTime` work.
+              height="70vh"
               events={events}
               datesSet={handleDatesSet}
               eventClick={handleEventClick}
