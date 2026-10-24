@@ -20,6 +20,8 @@ src/pages/       RoomsPage, UsersPage, ReservationsPage, CalendarPage, ReportPag
 src/lib/         formatting helpers, pdf export
 ```
 
+Built so far: `client.ts`, `types.ts`, `rooms.ts`, `RoomsPage`, `ErrorAlert`, `Layout` and `lib/equipment.ts`. The other files are planned for specs 09-12 and are created by the spec that needs them.
+
 ## Page pattern
 
 Each page keeps `items`, `filters`, `loading` and `error` state, loads in an effect keyed on the filters,
@@ -61,7 +63,7 @@ Number fields: validate inline (`error` + `helperText`) and send nothing for an 
 
 The API returns `{ errors: [{ code, message }] }`. `ApiError` carries that list and `ErrorAlert` renders every entry as
 `CODE -- message`. A missing server (fetch failure, or a 502/503/504 from the dev proxy) becomes `NETWORK_ERROR` with status 0;
-any other unexpected status becomes `HTTP_<status>`. Ids are GUID strings, never numbers. Rule violations (R1-R7) are shown inside the dialog that triggered them, not in a toast that disappears.
+any other unexpected status becomes `HTTP_<status>`. A non-`ApiError` thrown in a page is shown as `UNEXPECTED_ERROR`. Ids are GUID strings, never numbers. Rule violations (R1-R7) are shown inside the dialog that triggered them, not in a toast that disappears.
 
 ## UI conventions
 
