@@ -53,7 +53,7 @@ frontend/            React + TS app (src/api, src/pages, src/components, src/lib
 | 09 | users-page | merged |
 | 10 | reservations-page | merged |
 | 11 | calendar-view | merged |
-| 12 | report-pdf | pending |
+| 12 | report-pdf | merged |
 | 13 | docs-readme | pending |
 
 Do not implement a stub unless the active task targets that spec. Update this table when a spec is merged.
