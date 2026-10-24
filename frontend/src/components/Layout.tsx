@@ -7,17 +7,18 @@ const NAV_ITEMS = [
   { to: '/users', label: 'Users' },
   { to: '/reservations', label: 'Reservations' },
   { to: '/calendar', label: 'Calendar' },
+  { to: '/report', label: 'Report' },
 ]
 
 export function Layout() {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppBar position="static">
-        <Toolbar>
+        <Toolbar sx={{ flexWrap: 'wrap', py: 1 }}>
           <Typography variant="h6" component="div" sx={{ mr: 4 }}>
             Room Reservation
           </Typography>
-          <Box component="nav" sx={{ display: 'flex', gap: 1 }}>
+          <Box component="nav" sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {NAV_ITEMS.map((item) => (
               <Button
                 key={item.to}
