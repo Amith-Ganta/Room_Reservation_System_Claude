@@ -4,7 +4,7 @@ Apply this skill whenever building or modifying code in `frontend/`.
 
 ## Stack Constraints (non-negotiable)
 
-- React 18 + Vite + TypeScript (strict, no `any`)
+- React 19 + Vite + TypeScript (strict, no `any`); MUI 9 (`Stack` takes `alignItems` through `sx`; number-field attributes go in `slotProps.htmlInput`)
 - MUI (`@mui/material`) for all UI; no Tailwind, no other component library
 - `react-router-dom` for routing; FullCalendar (free plugins only) for the calendar; `jspdf` + `jspdf-autotable` for PDF export
 - All HTTP goes through `src/api/client.ts`; pages never call `fetch` directly
@@ -14,11 +14,10 @@ Apply this skill whenever building or modifying code in `frontend/`.
 ## Layout
 
 ```
-src/api/         client.ts (ApiError), rooms.ts, users.ts, reservations.ts, reports.ts
+src/api/         client.ts (ApiError), types.ts (DTO types mirroring the API), rooms.ts, users.ts, reservations.ts, reports.ts
 src/components/  Layout, ErrorAlert, shared dialogs
 src/pages/       RoomsPage, UsersPage, ReservationsPage, CalendarPage, ReportPage
 src/lib/         formatting helpers, pdf export
-src/types.ts     DTO types mirroring the API
 ```
 
 ## Page pattern
@@ -27,25 +26,42 @@ Each page keeps `items`, `filters`, `loading` and `error` state, loads in an eff
 and renders three states: loading (progress), empty (message) and error (`ErrorAlert`).
 
 ```tsx
-const [items, setItems] = useState<RoomDto[]>([]);
-const [loading, setLoading] = useState(false);
-const [error, setError] = useState<ApiError | null>(null);
+const [items, setItems] = useState<RoomDto[]>([])
+const [loading, setLoading] = useState(true)
+const [errors, setErrors] = useState<ApiErrorItem[]>([])
 
 useEffect(() => {
-  let cancelled = false;
-  setLoading(true);
-  getRooms(filters)
-    .then(r => !cancelled && setItems(r))
-    .catch(e => !cancelled && setError(e as ApiError))
-    .finally(() => !cancelled && setLoading(false));
-  return () => { cancelled = true; };
-}, [filters]);
+  // Aborting the previous request means an older response can never replace a newer one.
+  const controller = new AbortController()
+  setLoading(true)
+  setErrors([])
+  listRooms(filters, controller.signal)
+    .then((result) => {
+      if (controller.signal.aborted) return
+      setItems(result)
+      setLoading(false)
+    })
+    .catch((error: unknown) => {
+      if (controller.signal.aborted) return
+      setItems([])
+      setErrors(
+        error instanceof ApiError
+          ? error.errors
+          : [{ code: 'UNEXPECTED_ERROR', message: 'Something unexpected happened. Please try again.' }],
+      )
+      setLoading(false)
+    })
+  return () => controller.abort()
+}, [filters])
 ```
+
+Number fields: validate inline (`error` + `helperText`) and send nothing for an invalid value; debounce typing by 300 ms.
 
 ## Error display
 
 The API returns `{ errors: [{ code, message }] }`. `ApiError` carries that list and `ErrorAlert` renders every entry as
-`CODE: message`. Rule violations (R1-R7) are shown inside the dialog that triggered them, not in a toast that disappears.
+`CODE -- message`. A missing server (fetch failure, or a 502/503/504 from the dev proxy) becomes `NETWORK_ERROR` with status 0;
+any other unexpected status becomes `HTTP_<status>`. Ids are GUID strings, never numbers. Rule violations (R1-R7) are shown inside the dialog that triggered them, not in a toast that disappears.
 
 ## UI conventions
 

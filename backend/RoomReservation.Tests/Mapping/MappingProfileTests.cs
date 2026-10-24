@@ -1,5 +1,6 @@
 using AutoMapper;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using RoomReservation.Api.Domain;
 using RoomReservation.Api.Dtos;
 using RoomReservation.Api.Mapping;
@@ -10,7 +11,7 @@ namespace RoomReservation.Tests.Mapping;
 public class MappingProfileTests
 {
     public static MapperConfiguration NewConfiguration() =>
-        new(config => config.AddProfile<MappingProfile>());
+        new(config => config.AddProfile<MappingProfile>(), NullLoggerFactory.Instance);
 
     private static readonly IMapper Mapper = NewConfiguration().CreateMapper();
 
