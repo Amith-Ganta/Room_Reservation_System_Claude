@@ -1,4 +1,5 @@
 using FluentAssertions;
+using RoomReservation.Api.Domain;
 using RoomReservation.Api.Repositories;
 
 namespace RoomReservation.Tests.Repositories;
@@ -15,7 +16,7 @@ public class UserRepositoryTests
             TestDb.User("Abe", "Adams"));
         await db.SaveChangesAsync();
 
-        var users = await new UserRepository(db).ListAsync();
+        var users = (await new UserRepository(db).ListPagedAsync(new PageRequest(1, 10))).Items;
 
         users.Select(u => $"{u.FirstName} {u.LastName}").Should().Equal("Abe Adams", "Zoe Adams", "Ann Brown");
     }

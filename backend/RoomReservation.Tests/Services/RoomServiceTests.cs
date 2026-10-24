@@ -21,14 +21,14 @@ public class RoomServiceTests
             TestDb.Room("Closed", capacity: 8, floor: 0, Equipment.None, isActive: false));
         await db.SaveChangesAsync();
         var mapper = MappingProfileTests.NewConfiguration().CreateMapper();
-        return new RoomService(new RoomRepository(db), mapper);
+        return new RoomService(new RoomRepository(db), mapper, TestDb.Paging());
     }
 
     private static async Task<IReadOnlyList<RoomDto>> ListAsync(RoomListQuery query)
     {
         var result = await (await ServiceAsync()).ListAsync(query);
         result.Status.Should().Be(ResultStatus.Ok);
-        return result.Value!;
+        return result.Value!.Items;
     }
 
     [Fact]

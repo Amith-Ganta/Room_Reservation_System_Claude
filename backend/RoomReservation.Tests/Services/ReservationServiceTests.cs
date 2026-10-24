@@ -39,7 +39,8 @@ public class ReservationServiceTests
         var validator = new ReservationValidator(repository, Options.Create(new BookingRulesOptions { MaxDurationDays = 7, MaxHorizonDays = 90 }), clock);
         return new ReservationService(
             repository, new RoomRepository(_db), new UserRepository(_db), validator,
-            new ReservationLifecycle(repository, clock), MappingProfileTests.NewConfiguration().CreateMapper(), clock);
+            new ReservationLifecycle(repository, clock), MappingProfileTests.NewConfiguration().CreateMapper(), clock,
+            TestDb.Paging());
     }
 
     private CreateReservationRequest Request(
@@ -183,6 +184,7 @@ public class ReservationServiceTests
         var result = await Service().ListAsync(new ReservationListQuery { From = TestDb.Now, To = TestDb.Now });
 
         result.Status.Should().Be(ResultStatus.Ok);
-        result.Value.Should().BeEmpty();
+        result.Value!.Items.Should().BeEmpty();
+        result.Value.TotalCount.Should().Be(0);
     }
 }

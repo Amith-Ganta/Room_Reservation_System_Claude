@@ -98,7 +98,7 @@ public class ReservationsEndpointTests : IClassFixture<WebApplicationFactory<Pro
             .Should().OnlyContain(e => !string.IsNullOrWhiteSpace(e.GetProperty("message").GetString()));
 
     private static string[] Ids(JsonElement list) =>
-        list.EnumerateArray().Select(r => r.GetProperty("id").GetString()!).ToArray();
+        list.GetProperty("items").EnumerateArray().Select(r => r.GetProperty("id").GetString()!).ToArray();
 
     // ---------- create ----------
 
@@ -297,7 +297,7 @@ public class ReservationsEndpointTests : IClassFixture<WebApplicationFactory<Pro
         Codes(noUser.Json).Should().Equal(ErrorCodes.UserNotFound);
         missingIds.Status.Should().Be(HttpStatusCode.NotFound);
         Codes(missingIds.Json).Should().Equal(ErrorCodes.RoomNotFound);
-        (await env.SendAsync(HttpMethod.Get, "/api/reservations")).Json.GetArrayLength().Should().Be(0);
+        (await env.SendAsync(HttpMethod.Get, "/api/reservations")).Json.GetProperty("items").GetArrayLength().Should().Be(0);
     }
 
     [Fact]
@@ -328,7 +328,7 @@ public class ReservationsEndpointTests : IClassFixture<WebApplicationFactory<Pro
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync()).Should().Contain(ErrorCodes.InvalidRequest);
-        (await env.SendAsync(HttpMethod.Get, "/api/reservations")).Json.GetArrayLength().Should().Be(0);
+        (await env.SendAsync(HttpMethod.Get, "/api/reservations")).Json.GetProperty("items").GetArrayLength().Should().Be(0);
     }
 
     [Fact]
@@ -360,7 +360,7 @@ public class ReservationsEndpointTests : IClassFixture<WebApplicationFactory<Pro
         results.Count(r => r.Status == HttpStatusCode.Created).Should().Be(1);
         var rejected = results.Single(r => r.Status == HttpStatusCode.UnprocessableEntity);
         Codes(rejected.Json).Should().Equal(ErrorCodes.RoomOverlap);
-        (await env.SendAsync(HttpMethod.Get, "/api/reservations")).Json.GetArrayLength().Should().Be(1);
+        (await env.SendAsync(HttpMethod.Get, "/api/reservations")).Json.GetProperty("items").GetArrayLength().Should().Be(1);
     }
 
     [Fact]
@@ -693,8 +693,8 @@ public class ReservationsEndpointTests : IClassFixture<WebApplicationFactory<Pro
         var byUser = await env.SendAsync(HttpMethod.Get, $"/api/reservations?userId={Guid.NewGuid()}");
 
         byRoom.Status.Should().Be(HttpStatusCode.OK);
-        byRoom.Json.GetArrayLength().Should().Be(0);
-        byUser.Json.GetArrayLength().Should().Be(0);
+        byRoom.Json.GetProperty("items").GetArrayLength().Should().Be(0);
+        byUser.Json.GetProperty("items").GetArrayLength().Should().Be(0);
     }
 
     [Theory]
@@ -750,7 +750,7 @@ public class ReservationsEndpointTests : IClassFixture<WebApplicationFactory<Pro
         var afterEnd = await env.SendAsync(HttpMethod.Get, $"/api/reservations?from={Q(Now.AddMinutes(-30))}");
         var beforeEnd = await env.SendAsync(HttpMethod.Get, $"/api/reservations?from={Q(Now.AddMinutes(-90))}");
 
-        afterEnd.Json.GetArrayLength().Should().Be(0);
+        afterEnd.Json.GetProperty("items").GetArrayLength().Should().Be(0);
         Ids(beforeEnd.Json).Should().Equal(ended.Id.ToString());
     }
 

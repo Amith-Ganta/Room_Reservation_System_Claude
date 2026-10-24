@@ -164,7 +164,7 @@ flowchart TB
     end
 
     ef[("AppDbContext<br/>EF Core InMemory")]
-    opts["IOptions of BookingRulesOptions<br/>and UsageReportOptions"]
+    opts["IOptions of BookingRulesOptions,<br/>UsageReportOptions and PagingOptions"]
     clock["TimeProvider"]
 
     http --> ctl
@@ -415,9 +415,9 @@ numbers. Timestamps must be ISO 8601 **with an explicit offset** (`Z` or `+02:00
 
 | Method | Route | Purpose | Success | Errors |
 |--------|-------|---------|---------|--------|
-| GET | `/api/rooms?minCapacity&floor&equipment` | List rooms, inactive ones included, ordered by floor then name. `equipment` is a comma-separated list; a room must have all of them | 200 | 400 |
-| GET | `/api/users` | List users with their number of active (Booked) reservations, ordered by last then first name | 200 | |
-| GET | `/api/reservations?roomId&userId&status&from&to` | List reservations, newest start first. `from` and `to` select a half-open window `[from, to)` | 200 | 400 |
+| GET | `/api/rooms?minCapacity&floor&equipment&page&pageSize` | List rooms, inactive ones included, ordered by floor then name. `equipment` is a comma-separated list; a room must have all of them | 200 | 400 |
+| GET | `/api/users?page&pageSize` | List users with their number of active (Booked) reservations, ordered by last then first name | 200 | 400 |
+| GET | `/api/reservations?roomId&userId&status&from&to&page&pageSize` | List reservations, newest start first. `from` and `to` select a half-open window `[from, to)` | 200 | 400 |
 | GET | `/api/reservations/{id}` | One reservation | 200 | 400, 404 |
 | POST | `/api/reservations` | Create (rules R1 to R7) | 201 + `Location` | 400, 404, 422 |
 | PUT | `/api/reservations/{id}` | Replace the details of a booked reservation that has not started | 200 | 400, 404, 409, 422 |
@@ -425,7 +425,40 @@ numbers. Timestamps must be ISO 8601 **with an explicit offset** (`Z` or `+02:00
 | POST | `/api/reservations/{id}/end` | End a running reservation now | 200 | 400, 404, 409 |
 | GET | `/api/reports/usage?from&to` | Usage report per room | 200 | 400 |
 
-Example request and response:
+### Paging
+
+The three list endpoints (rooms, users, reservations) always answer with the same envelope, so a client never has to
+guess whether a list is paged:
+
+```json
+{ "items": [ ], "page": 1, "pageSize": 20, "totalCount": 135, "totalPages": 7 }
+```
+
+| Parameter | Default | Rule |
+|-----------|---------|------|
+| `page` | 1 | 1 to 100000, otherwise 400 |
+| `pageSize` | `Paging:DefaultPageSize` (20) | at least 1; a value above `Paging:MaxPageSize` (100) is lowered to the maximum without an error; 0, a negative, a non-numeric or a too large number (above 2147483647) is a 400 |
+
+- Filters are applied **before** paging, so `totalCount` counts the matching rows only.
+- A page past the end is a normal 200 with empty `items` and the real totals.
+- The order is total and stable, with the id as the last tie-breaker: rooms by floor, name, id; users by last name,
+  first name, id; reservations by start (newest first), id. A row never appears on two pages.
+- The usage report is not paged: it always covers every room.
+
+Example paging request and response (the second page of rooms, two per page; `items` is shortened here):
+
+```bash
+curl "http://localhost:5080/api/rooms?page=2&pageSize=2"
+```
+
+```json
+{
+  "items": [ { "id": "…", "name": "Birch", "floor": 1, "capacity": 6 }, { "id": "…", "name": "Cedar", "floor": 1, "capacity": 8 } ],
+  "page": 2, "pageSize": 2, "totalCount": 7, "totalPages": 4
+}
+```
+
+#### Example: create a reservation
 
 ```bash
 curl -X POST http://localhost:5080/api/reservations \
@@ -470,8 +503,8 @@ Five pages sit under one `Layout` (top bar and navigation). Unknown paths redire
 
 | Route | Page | What it does |
 |-------|------|--------------|
-| `/rooms` | Rooms | Table with the three filters (capacity, floor, equipment) |
-| `/users` | Users | Table with the active reservation count, sortable |
+| `/rooms` | Rooms | Table with the three filters (capacity, floor, equipment) and a pager |
+| `/users` | Users | Table with the active reservation count, sortable (the sort orders the rows of the current page only) |
 | `/reservations` | Reservations | Filter, create, edit, cancel and end early; rule errors appear inside the dialog with code and message |
 | `/calendar` | Calendar | Week, day or month grid for one room; click an event for details, select a free range to start a booking |
 | `/report` | Report | Per-room usage table, highlighted rows for flagged rooms, date range, PDF export |
@@ -521,6 +554,9 @@ How the pages behave, in short:
 - **One error type.** `client.ts` turns every failure into an `ApiError(status, errors)`: a rule error from the API,
   an unexpected response shape (`UNEXPECTED_RESPONSE`), or a network problem (status 0). The UI shows the error
   alert and a Retry button, never a blank screen.
+- **Paged tables, complete lookups.** The three tables show one server page at a time with a pager (page size 10,
+  20, 50 or 100). A new filter returns to page 1, and if a page disappears after a change the view moves to the last
+  page that exists. Drop-downs and the calendar need every row, so they read all pages through `fetchAllPages`.
 - **No business logic.** The pages send form values and show the answer. The 7 and 90 day limits, the overlap rules
   and every report figure live only in the API.
 - **Small bundle.** jsPDF and jspdf-autotable are imported only when the user clicks *Export PDF*.
@@ -539,6 +575,8 @@ outside its range stops the application with a clear message instead of failing 
 | `BookingRules` | `MaxHorizonDays` | 90 | 1 to 3650 |
 | `UsageReport` | `MinBookingsToFlag` | 4 | 1 to 1000 |
 | `UsageReport` | `UnderusedThresholdPercent` | 50 | 1 to 100 |
+| `Paging` | `DefaultPageSize` | 20 | 1 to 1000, not above `MaxPageSize` |
+| `Paging` | `MaxPageSize` | 100 | 1 to 1000 |
 | `Cors` | `AllowedOrigins` | `["http://localhost:5173"]` | list of origins |
 | `Seed` | `Enabled` | `false` (`true` in `appsettings.Development.json`) | true or false |
 | `Database` | `Name` | `RoomReservation` | InMemory database name |
@@ -561,7 +599,7 @@ Any key can be overridden with an environment variable using the standard double
 │   ├── RoomReservation.sln
 │   ├── RoomReservation.Api/
 │   │   ├── Common/                Result<T>, ErrorCodes, ApiErrorResponse, timestamp binding
-│   │   ├── Configuration/         BookingRulesOptions, UsageReportOptions
+│   │   ├── Configuration/         BookingRulesOptions, UsageReportOptions, PagingOptions
 │   │   ├── Controllers/           thin: bind, call a service, map the Result to HTTP
 │   │   ├── Data/                  AppDbContext, DbSeeder
 │   │   ├── Domain/                Room, User, Reservation, enums, equipment flags, filters
@@ -606,7 +644,7 @@ Any key can be overridden with an environment variable using the standard double
 | **Repository** | `IRepository<T>` with `RoomRepository`, `UserRepository`, `ReservationRepository`; services never write EF queries. |
 | **Dependency Injection** | Constructor injection throughout; everything is registered in `Program.cs`. |
 | **DTO + Mapper** | Entities stay inside the API; AutoMapper (`MappingProfile`) maps them to DTOs. |
-| **Options** | `IOptions<BookingRulesOptions>` and `IOptions<UsageReportOptions>`, validated on start. |
+| **Options** | `IOptions<BookingRulesOptions>`, `IOptions<UsageReportOptions>` and `IOptions<PagingOptions>`, validated on start. |
 | **Result** | `Result<T>` with Ok, Invalid, NotFound and Conflict outcomes. |
 | **Strategy-like rule set** | Each of R1 to R7 is a small, separate check inside the validator, added or changed without touching the others. |
 | **Facade** | `ReservationService` gives controllers one simple call per use case and hides lock, lifecycle, validator and repositories behind it. |
@@ -683,6 +721,6 @@ Versions are taken from `RoomReservation.Api.csproj`, `RoomReservation.Tests.csp
 - **Data is lost on restart.** The database is InMemory. Development re-seeds on each start; with seeding off
   (the default outside Development) the API starts empty.
 - **Single-instance write lock.** The lock protects one process. Several instances need a database-level guarantee.
-- **No paging.** The list endpoints return everything. Paging is planned.
+- **Page-local sort on the Users page.** The column sort reorders the rows of the current page only; the API order (last name) spans all pages.
 - **No front-end tests yet.** The front end is covered by the type check and build only. Tests are planned.
 - **Report PDF is Latin only** (see above).

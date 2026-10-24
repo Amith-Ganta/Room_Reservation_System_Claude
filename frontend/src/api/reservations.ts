@@ -1,7 +1,8 @@
 import { request } from './client'
-import type { CreateReservationRequest, ReservationDto, ReservationStatus } from './types'
+import { setPageParams } from './paging'
+import type { CreateReservationRequest, PageParams, PagedResult, ReservationDto, ReservationStatus } from './types'
 
-export interface ReservationFilters {
+export interface ReservationFilters extends PageParams {
   roomId?: string
   userId?: string
   status?: ReservationStatus
@@ -12,7 +13,7 @@ export interface ReservationFilters {
 }
 
 /** Filtering happens in the API; empty filters are simply left out of the query string. */
-export function listReservations(filters: ReservationFilters, signal?: AbortSignal): Promise<ReservationDto[]> {
+export function listReservations(filters: ReservationFilters, signal?: AbortSignal): Promise<PagedResult<ReservationDto>> {
   const query = new URLSearchParams()
   if (filters.roomId !== undefined) {
     query.set('roomId', filters.roomId)
@@ -29,10 +30,11 @@ export function listReservations(filters: ReservationFilters, signal?: AbortSign
   if (filters.to !== undefined) {
     query.set('to', filters.to)
   }
+  setPageParams(query, filters)
   const text = query.toString()
-  return request<ReservationDto[]>(text.length > 0 ? `/api/reservations?${text}` : '/api/reservations', {
+  return request<PagedResult<ReservationDto>>(text.length > 0 ? `/api/reservations?${text}` : '/api/reservations', {
     signal,
-    expect: 'array',
+    expect: 'object',
   })
 }
 

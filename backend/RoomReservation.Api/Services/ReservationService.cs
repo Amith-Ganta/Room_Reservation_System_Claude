@@ -1,5 +1,7 @@
 using AutoMapper;
+using Microsoft.Extensions.Options;
 using RoomReservation.Api.Common;
+using RoomReservation.Api.Configuration;
 using RoomReservation.Api.Domain;
 using RoomReservation.Api.Dtos;
 using RoomReservation.Api.Repositories;
@@ -17,16 +19,19 @@ public sealed class ReservationService(
     IReservationValidator validator,
     ReservationLifecycle lifecycle,
     IMapper mapper,
-    TimeProvider timeProvider) : IReservationService
+    TimeProvider timeProvider,
+    IOptions<PagingOptions> paging) : IReservationService
 {
     // Static on purpose: the service is scoped, so an instance lock would not guard parallel requests.
     private static readonly SemaphoreSlim WriteLock = new(1, 1);
 
-    public async Task<Result<IReadOnlyList<ReservationDto>>> ListAsync(ReservationListQuery query, CancellationToken ct = default)
+    public async Task<Result<PagedResult<ReservationDto>>> ListAsync(ReservationListQuery query, CancellationToken ct = default)
     {
         await lifecycle.CompleteElapsedAsync(ct);
-        var found = await reservations.ListAsync(mapper.Map<ReservationFilter>(query), ct);
-        return Result<IReadOnlyList<ReservationDto>>.Ok(mapper.Map<List<ReservationDto>>(found));
+        var page = query.ToRequest(paging.Value);
+        var found = await reservations.ListPagedAsync(mapper.Map<ReservationFilter>(query), page, ct);
+        return Result<PagedResult<ReservationDto>>.Ok(
+            PagedResult<ReservationDto>.Create(mapper.Map<List<ReservationDto>>(found.Items), page, found.TotalCount));
     }
 
     public async Task<Result<ReservationDto>> GetAsync(Guid id, CancellationToken ct = default)

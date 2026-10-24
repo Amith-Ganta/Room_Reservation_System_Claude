@@ -42,7 +42,7 @@ public class UsersEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var response = await client.GetAsync("/api/users");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        return json.RootElement.EnumerateArray().Select(user => user.Clone()).ToList();
+        return json.RootElement.GetProperty("items").EnumerateArray().Select(user => user.Clone()).ToList();
     }
 
     [Fact]

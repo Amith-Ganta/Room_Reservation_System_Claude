@@ -4,7 +4,7 @@ using RoomReservation.Api.Domain;
 namespace RoomReservation.Api.Dtos;
 
 /// <summary>Query string of <c>GET /api/rooms</c>. Invalid values are rejected by model validation (HTTP 400).</summary>
-public sealed class RoomListQuery
+public sealed class RoomListQuery : PageQuery
 {
     /// <summary>Keep rooms that seat at least this many people.</summary>
     [Range(0, 10_000, ErrorMessage = "minCapacity must be between 0 and 10000.")]

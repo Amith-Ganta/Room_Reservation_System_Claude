@@ -121,9 +121,20 @@ public class ReservationRepositoryTests
         await f.AddAsync(f.Room, f.Ann, T.AddHours(4), OneHour, ReservationStatus.Cancelled);
         await f.AddAsync(f.Room, f.Bob, T.AddHours(6), OneHour, ReservationStatus.Completed);
 
-        var counts = await f.Repo.CountActiveByUserAsync();
+        var counts = await f.Repo.CountActiveByUserAsync([f.Ann.Id, f.Bob.Id]);
 
         counts.Should().ContainSingle().Which.Should().Be(new KeyValuePair<Guid, int>(f.Ann.Id, 2));
+    }
+
+    [Fact]
+    public async Task Count_active_by_user_ignores_users_that_were_not_asked_for()
+    {
+        var f = new Fixture();
+        await f.AddAsync(f.Room, f.Ann, T, OneHour);
+        await f.AddAsync(f.Room, f.Bob, T.AddHours(2), OneHour);
+
+        (await f.Repo.CountActiveByUserAsync([f.Bob.Id])).Should().ContainSingle().Which.Key.Should().Be(f.Bob.Id);
+        (await f.Repo.CountActiveByUserAsync([])).Should().BeEmpty();
     }
 
     [Fact]
@@ -164,10 +175,10 @@ public class ReservationRepositoryTests
         await f.AddAsync(f.Room, f.Bob, T.AddHours(9), OneHour);
         await f.AddAsync(f.Room, f.Ann, T.AddHours(12), OneHour, ReservationStatus.Cancelled);
 
-        var list = await f.Repo.ListAsync(new ReservationFilter
+        var list = (await f.Repo.ListPagedAsync(new ReservationFilter
         {
             RoomId = f.Room.Id, UserId = f.Ann.Id, Status = ReservationStatus.Booked
-        });
+        }, new PageRequest(1, 50))).Items;
 
         list.Select(r => r.Id).Should().Equal(second.Id, first.Id);
         list.Should().OnlyContain(r => r.Room != null && r.User != null);
@@ -180,7 +191,7 @@ public class ReservationRepositoryTests
         var spanning = await f.AddAsync(f.Room, f.Ann, T, TimeSpan.FromHours(4));
         await f.AddAsync(f.OtherRoom, f.Bob, T.AddDays(5), OneHour);
 
-        var list = await f.Repo.ListAsync(new ReservationFilter { From = T.AddHours(1), To = T.AddHours(2) });
+        var list = (await f.Repo.ListPagedAsync(new ReservationFilter { From = T.AddHours(1), To = T.AddHours(2) }, new PageRequest(1, 50))).Items;
 
         list.Select(r => r.Id).Should().Equal(spanning.Id);
     }
@@ -248,7 +259,7 @@ public class ReservationRepositoryTests
         await f.AddAsync(f.Room, f.Ann, T, OneHour);
         var cancelled = await f.AddAsync(f.OtherRoom, f.Bob, T, OneHour, ReservationStatus.Cancelled);
 
-        var list = await f.Repo.ListAsync(new ReservationFilter { Status = ReservationStatus.Cancelled });
+        var list = (await f.Repo.ListPagedAsync(new ReservationFilter { Status = ReservationStatus.Cancelled }, new PageRequest(1, 50))).Items;
 
         list.Select(r => r.Id).Should().Equal(cancelled.Id);
     }
@@ -261,7 +272,7 @@ public class ReservationRepositoryTests
         var startsAtTo = await f.AddAsync(f.OtherRoom, f.Bob, T.AddHours(2), OneHour);   // starts exactly at To
         var inside = await f.AddAsync(f.Room, f.Bob, T.AddMinutes(30), OneHour);
 
-        var list = await f.Repo.ListAsync(new ReservationFilter { From = T, To = T.AddHours(2) });
+        var list = (await f.Repo.ListPagedAsync(new ReservationFilter { From = T, To = T.AddHours(2) }, new PageRequest(1, 50))).Items;
 
         list.Select(r => r.Id).Should().Equal(inside.Id);
         list.Select(r => r.Id).Should().NotContain([endsAtFrom.Id, startsAtTo.Id]);
@@ -274,7 +285,7 @@ public class ReservationRepositoryTests
         // Planned for 4 hours but ended 30 minutes in: it no longer overlaps a window that starts an hour after T.
         await f.AddAsync(f.Room, f.Ann, T, TimeSpan.FromHours(4), ReservationStatus.Completed, endedAt: T.AddMinutes(30));
 
-        var list = await f.Repo.ListAsync(new ReservationFilter { From = T.AddHours(1), To = T.AddHours(2) });
+        var list = (await f.Repo.ListPagedAsync(new ReservationFilter { From = T.AddHours(1), To = T.AddHours(2) }, new PageRequest(1, 50))).Items;
 
         list.Should().BeEmpty();
     }

@@ -25,6 +25,12 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services
+    .AddOptions<PagingOptions>()
+    .Bind(builder.Configuration.GetSection(PagingOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 builder.Services.AddSingleton(TimeProvider.System);
 
 var databaseName = builder.Configuration["Database:Name"];

@@ -25,6 +25,7 @@ import { ApiError } from '../api/client'
 import { listRooms } from '../api/rooms'
 import type { ApiErrorItem, EquipmentName, RoomDto } from '../api/types'
 import { ErrorAlert } from '../components/ErrorAlert'
+import { ListPager, type PageInfo } from '../components/ListPager'
 import { LoadingIndicator } from '../components/LoadingIndicator'
 import { ALL_EQUIPMENT, EQUIPMENT_LABELS } from '../lib/equipment'
 
@@ -67,18 +68,21 @@ export function RoomsPage() {
   const [applied, setApplied] = useState<TextFilters>(NO_TEXT_FILTERS)
 
   const [rooms, setRooms] = useState<RoomDto[]>([])
+  // `pageSize` stays undefined until the user picks one, so the API default applies.
+  const [paging, setPaging] = useState<{ page: number; pageSize?: number }>({ page: 1 })
+  const [pageInfo, setPageInfo] = useState<PageInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [errors, setErrors] = useState<ApiErrorItem[]>([])
 
   useEffect(() => {
     // Keep the previous object when nothing changed, so typing and deleting does not refetch.
-    const timer = window.setTimeout(
-      () =>
-        setApplied((previous) =>
-          previous.minCapacity === typed.minCapacity && previous.floor === typed.floor ? previous : typed,
-        ),
-      TYPING_DELAY_MS,
-    )
+    const timer = window.setTimeout(() => {
+      setApplied((previous) =>
+        previous.minCapacity === typed.minCapacity && previous.floor === typed.floor ? previous : typed,
+      )
+      // A new filter always starts on the first page (no change when it is already there).
+      setPaging((current) => (current.page === 1 ? current : { ...current, page: 1 }))
+    }, TYPING_DELAY_MS)
     return () => window.clearTimeout(timer)
   }, [typed])
 
@@ -92,6 +96,8 @@ export function RoomsPage() {
         minCapacity: toCapacity(applied.minCapacity),
         floor: toWholeNumber(applied.floor),
         equipment,
+        page: paging.page,
+        pageSize: paging.pageSize,
       },
       controller.signal,
     )
@@ -99,7 +105,13 @@ export function RoomsPage() {
         if (controller.signal.aborted) {
           return
         }
-        setRooms(result)
+        // After a filter change the list can be shorter than the page asked for: go to the last page that exists.
+        if (result.items.length === 0 && result.totalPages > 0 && result.page > result.totalPages) {
+          setPaging((current) => ({ ...current, page: result.totalPages }))
+          return
+        }
+        setRooms(result.items)
+        setPageInfo({ pageSize: result.pageSize, totalCount: result.totalCount })
         setLoading(false)
       })
       .catch((error: unknown) => {
@@ -107,6 +119,7 @@ export function RoomsPage() {
           return
         }
         setRooms([])
+        setPageInfo(null)
         setErrors(
           error instanceof ApiError
             ? error.errors
@@ -115,12 +128,17 @@ export function RoomsPage() {
         setLoading(false)
       })
     return () => controller.abort()
-  }, [applied, equipment])
+  }, [applied, equipment, paging])
 
   function clearFilters() {
     setTyped(NO_TEXT_FILTERS)
     setApplied(NO_TEXT_FILTERS)
     setEquipment([])
+    goToFirstPage()
+  }
+
+  function goToFirstPage() {
+    setPaging((current) => (current.page === 1 ? current : { ...current, page: 1 }))
   }
 
   return (
@@ -151,6 +169,7 @@ export function RoomsPage() {
               onChange={(event) => {
                 const value = event.target.value
                 setEquipment(typeof value === 'string' ? (value.split(',') as EquipmentName[]) : value)
+                goToFirstPage()
               }}
               input={<OutlinedInput label="Equipment" />}
               renderValue={(selected) => selected.map((name) => EQUIPMENT_LABELS[name]).join(', ')}
@@ -233,6 +252,12 @@ export function RoomsPage() {
             )}
           </TableBody>
         </Table>
+        <ListPager
+          label="Rooms"
+          page={paging.page}
+          info={pageInfo}
+          onChange={(page, pageSize) => setPaging((current) => ({ page, pageSize: pageSize ?? current.pageSize }))}
+        />
       </TableContainer>
     </Stack>
   )

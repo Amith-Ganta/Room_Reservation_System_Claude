@@ -1,14 +1,15 @@
 import { request } from './client'
-import type { EquipmentName, RoomDto } from './types'
+import { setPageParams } from './paging'
+import type { EquipmentName, PageParams, PagedResult, RoomDto } from './types'
 
-export interface RoomFilters {
+export interface RoomFilters extends PageParams {
   minCapacity?: number
   equipment?: EquipmentName[]
   floor?: number
 }
 
 /** Filtering happens in the API; empty filters are simply left out of the query string. */
-export function listRooms(filters: RoomFilters, signal?: AbortSignal): Promise<RoomDto[]> {
+export function listRooms(filters: RoomFilters, signal?: AbortSignal): Promise<PagedResult<RoomDto>> {
   const query = new URLSearchParams()
   if (filters.minCapacity !== undefined) {
     query.set('minCapacity', String(filters.minCapacity))
@@ -19,6 +20,7 @@ export function listRooms(filters: RoomFilters, signal?: AbortSignal): Promise<R
   if (filters.floor !== undefined) {
     query.set('floor', String(filters.floor))
   }
+  setPageParams(query, filters)
   const text = query.toString()
-  return request<RoomDto[]>(text.length > 0 ? `/api/rooms?${text}` : '/api/rooms', { signal, expect: 'array' })
+  return request<PagedResult<RoomDto>>(text.length > 0 ? `/api/rooms?${text}` : '/api/rooms', { signal, expect: 'object' })
 }
