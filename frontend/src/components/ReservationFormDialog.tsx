@@ -97,8 +97,15 @@ export function ReservationFormDialog({
     if (busy.current) {
       return
     }
-    const start = toIsoWithOffset(values.start)
-    const end = toIsoWithOffset(values.end)
+    // The input only shows whole minutes: a time the user did not edit goes back exactly as the API sent it.
+    const start =
+      reservation !== null && values.start === toLocalInputValue(reservation.start)
+        ? reservation.start
+        : toIsoWithOffset(values.start)
+    const end =
+      reservation !== null && values.end === toLocalInputValue(reservation.end)
+        ? reservation.end
+        : toIsoWithOffset(values.end)
     const attendeeCount = toWholeNumber(values.attendees)
     const messages: FieldMessages = {}
     if (values.roomId === '') {

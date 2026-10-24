@@ -46,6 +46,11 @@ interface Filters {
 
 const NO_FILTERS: Filters = { roomId: '', userId: '', status: '', from: '', to: '' }
 
+/** The drop-down only offers known values; anything else (including "All") means no status filter. */
+function toStatusFilter(value: string): '' | ReservationStatus {
+  return STATUSES.find((name) => name === value) ?? ''
+}
+
 /** What the open dialog is for: a form (create when `reservation` is null) or a confirm step for one row. */
 type DialogState =
   | { kind: 'form'; reservation: ReservationDto | null }
@@ -75,6 +80,7 @@ export function ReservationsPage() {
   const [lookupsLoading, setLookupsLoading] = useState(true)
   const [lookupErrors, setLookupErrors] = useState<ApiErrorItem[]>([])
   const [lookupReloadCount, setLookupReloadCount] = useState(0)
+  const [retryRequested, setRetryRequested] = useState(false)
 
   const [dialog, setDialog] = useState<DialogState>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -144,8 +150,8 @@ export function ReservationsPage() {
     setReloadCount((count) => count + 1)
   }
 
-  function changeFilter(field: keyof Filters, value: string) {
-    setFilters((current) => ({ ...current, [field]: value }))
+  function changeFilter(change: Partial<Filters>) {
+    setFilters((current) => ({ ...current, ...change }))
   }
 
   function finishWrite(message: string) {
@@ -154,15 +160,28 @@ export function ReservationsPage() {
     reload()
   }
 
-  // After a click the button stays mounted until the retry finishes, so the keyboard focus is not lost.
-  const showRetry = errors.length > 0 || lookupErrors.length > 0 || ((loading || lookupsLoading) && reloadCount + lookupReloadCount > 0)
   const retrying = loading || lookupsLoading
+  // After a click the button stays mounted until the retry finishes, so the keyboard focus is not lost.
+  // Only a click on Retry sets the flag: a reload after a write or a filter change must not show "Retrying…".
+  const showRetry = errors.length > 0 || lookupErrors.length > 0 || (retryRequested && retrying)
   const lookupsReady = !lookupsLoading && lookupErrors.length === 0
+  // When the backend is down both loads fail with the same error: show it once.
+  const listErrors = errors.filter(
+    (item) => !lookupErrors.some((known) => known.code === item.code && known.message === item.message),
+  )
+
+  // The loads start one render after the click, so the flag is cleared only when `retrying` turns false again.
+  useEffect(() => {
+    if (!retrying) {
+      setRetryRequested(false)
+    }
+  }, [retrying])
 
   function retry() {
     if (retrying) {
       return
     }
+    setRetryRequested(true)
     if (lookupErrors.length > 0) {
       setLookupReloadCount((count) => count + 1)
     }
@@ -181,7 +200,7 @@ export function ReservationsPage() {
           size="small"
           label="Room"
           value={filters.roomId}
-          onChange={(event) => changeFilter('roomId', event.target.value)}
+          onChange={(event) => changeFilter({ roomId: event.target.value })}
           sx={{ minWidth: 180 }}
           slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
         >
@@ -197,7 +216,7 @@ export function ReservationsPage() {
           size="small"
           label="Organizer"
           value={filters.userId}
-          onChange={(event) => changeFilter('userId', event.target.value)}
+          onChange={(event) => changeFilter({ userId: event.target.value })}
           sx={{ minWidth: 180 }}
           slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
         >
@@ -213,7 +232,7 @@ export function ReservationsPage() {
           size="small"
           label="Status"
           value={filters.status}
-          onChange={(event) => changeFilter('status', event.target.value)}
+          onChange={(event) => changeFilter({ status: toStatusFilter(event.target.value) })}
           sx={{ minWidth: 160 }}
           slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
         >
@@ -229,7 +248,7 @@ export function ReservationsPage() {
           label="From"
           type="datetime-local"
           value={filters.from}
-          onChange={(event) => changeFilter('from', event.target.value)}
+          onChange={(event) => changeFilter({ from: event.target.value })}
           slotProps={{ inputLabel: { shrink: true } }}
         />
         <TextField
@@ -237,7 +256,7 @@ export function ReservationsPage() {
           label="To"
           type="datetime-local"
           value={filters.to}
-          onChange={(event) => changeFilter('to', event.target.value)}
+          onChange={(event) => changeFilter({ to: event.target.value })}
           slotProps={{ inputLabel: { shrink: true } }}
         />
         <Button variant="contained" disabled={!lookupsReady} onClick={() => setDialog({ kind: 'form', reservation: null })}>
@@ -246,7 +265,7 @@ export function ReservationsPage() {
       </Stack>
 
       <ErrorAlert errors={lookupErrors} />
-      <ErrorAlert errors={errors} />
+      <ErrorAlert errors={listErrors} />
       {showRetry && (
         <div>
           {/* aria-disabled (not disabled) keeps keyboard focus on the button while the retry runs. */}
@@ -330,7 +349,7 @@ export function ReservationsPage() {
                         <Button
                           size="small"
                           color="warning"
-                          aria-label={`End ${reservation.title} now`}
+                          aria-label={`End now: ${reservation.title}`}
                           onClick={() => setDialog({ kind: 'end', reservation })}
                         >
                           End now
