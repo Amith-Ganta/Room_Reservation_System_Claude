@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using RoomReservation.Api.Common;
 using RoomReservation.Api.Configuration;
@@ -95,6 +96,14 @@ app.Use(async (context, next) =>
 // Unhandled exceptions are logged by the middleware; the client only gets the standard error body.
 app.UseExceptionHandler(errorApp => errorApp.Run(context =>
 {
+    // Kestrel raises this when the body passes the size limit above; that is a client mistake, not a server fault.
+    if (context.Features.Get<IExceptionHandlerFeature>()?.Error is BadHttpRequestException { StatusCode: StatusCodes.Status413PayloadTooLarge })
+    {
+        context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+        return context.Response.WriteAsJsonAsync(new ApiErrorResponse(
+            [new ApiError(ErrorCodes.PayloadTooLarge, "The request body is too large.")]));
+    }
+
     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
     return context.Response.WriteAsJsonAsync(new ApiErrorResponse(
         [new ApiError(ErrorCodes.InternalError, "An unexpected error occurred.")]));
