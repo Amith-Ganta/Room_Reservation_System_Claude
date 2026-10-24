@@ -15,7 +15,7 @@ The application itself is described in [README.md](README.md). Project rules for
 ## The delivery loop
 
 ```mermaid
-flowchart LR
+flowchart TB
     A["/create-spec<br/>write spec + branch"] --> B["Implement<br/>one small slice"]
     B --> C["/test-feature<br/>tests from the spec"]
     C --> D["/code-review-feature<br/>local security + quality review"]

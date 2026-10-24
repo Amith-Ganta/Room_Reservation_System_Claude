@@ -113,15 +113,15 @@ The browser only ever talks to the Vite dev server. In development Vite forwards
 database server: EF Core InMemory lives inside the API process.
 
 ```mermaid
-flowchart LR
+flowchart TB
     user(["User in a browser"])
 
-    subgraph FE["frontend - Vite dev server, port 5173"]
+    subgraph FE["Vite, port 5173"]
         spa["React 19 single page app<br/>MUI, FullCalendar, jsPDF"]
         proxy["Dev proxy: /api to port 5080"]
     end
 
-    subgraph BE["backend - ASP.NET Core 8, port 5080"]
+    subgraph BE["ASP.NET Core, port 5080"]
         mw["Middleware<br/>exception handler, CORS,<br/>security headers"]
         api["Controllers, services,<br/>validator, repositories"]
         db[("EF Core InMemory<br/>AppDbContext")]
@@ -286,48 +286,11 @@ flowchart TD
     lookup -->|"user missing"| nf2["404 USER_NOT_FOUND"]
     lookup -->|yes| input{"Input sound?"}
 
-    input -->|"End is not after Start"| i1["INVALID_TIME_RANGE"]
-    input -->|"title blank"| i2["TITLE_REQUIRED"]
-    input -->|"title over 200 characters"| i3["TITLE_TOO_LONG"]
-    input -->|"attendees below 1"| i4["INVALID_ATTENDEES"]
-    i1 --> out422
-    i2 --> out422
-    i3 --> out422
-    i4 --> out422
-
-    input -->|yes| rules["Run every rule and collect failures"]
-    rules --> r1{"R1 duration<br/>within limit?"}
-    r1 -->|no| e1["R1_MAX_DURATION"]
-    rules --> r2{"R2 room free?"}
-    r2 -->|no| e2["R2_ROOM_OVERLAP"]
-    rules --> r3{"R3 organizer free?"}
-    r3 -->|no| e3["R3_USER_OVERLAP"]
-    rules --> r4{"R4 start in<br/>the future?"}
-    r4 -->|no| e4["R4_PAST_START"]
-    rules --> r5{"R5 attendees fit?"}
-    r5 -->|no| e5["R5_CAPACITY_EXCEEDED"]
-    rules --> r6{"R6 inside the<br/>horizon?"}
-    r6 -->|no| e6["R6_BEYOND_HORIZON"]
-    rules --> r7{"R7 room active?"}
-    r7 -->|no| e7["R7_ROOM_INACTIVE"]
-
-    e1 --> out422
-    e2 --> out422
-    e3 --> out422
-    e4 --> out422
-    e5 --> out422
-    e6 --> out422
-    e7 --> out422
-    out422["422 with the list of errors"]
-
-    r1 -->|yes| ok
-    r2 -->|yes| ok
-    r3 -->|yes| ok
-    r4 -->|yes| ok
-    r5 -->|yes| ok
-    r6 -->|yes| ok
-    r7 -->|yes| ok
-    ok{"No failures at all?"} -->|yes| save["Save with status Booked<br/>201 Created, or 200 on edit"]
+    input -->|"no"| bad["422 INVALID_TIME_RANGE<br/>TITLE_REQUIRED, TITLE_TOO_LONG<br/>or INVALID_ATTENDEES"]
+    input -->|yes| rules["Run every rule R1 to R7<br/>and collect all failures"]
+    rules --> ok{"Any rule failed?"}
+    ok -->|"yes"| out422["422 with the list of errors<br/>for example R2_ROOM_OVERLAP<br/>and R5_CAPACITY_EXCEEDED"]
+    ok -->|"no"| save["Save with status Booked<br/>201 Created, or 200 on edit"]
 ```
 
 Edits use the same validator. The reservation being edited is excluded from the R2 and R3 overlap checks, so a
