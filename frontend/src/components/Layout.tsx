@@ -5,6 +5,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 const NAV_ITEMS = [
   { to: '/rooms', label: 'Rooms' },
   { to: '/users', label: 'Users' },
+  { to: '/reservations', label: 'Reservations' },
 ]
 
 export function Layout() {
