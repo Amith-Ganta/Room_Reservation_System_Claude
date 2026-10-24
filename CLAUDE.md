@@ -50,7 +50,7 @@ frontend/            React + TS app (src/api, src/pages, src/components, src/lib
 | 06 | users-api | merged |
 | 07 | usage-report | merged |
 | 08 | frontend-scaffold-rooms | merged |
-| 09 | users-page | pending |
+| 09 | users-page | merged |
 | 10 | reservations-page | pending |
 | 11 | calendar-view | pending |
 | 12 | report-pdf | pending |
