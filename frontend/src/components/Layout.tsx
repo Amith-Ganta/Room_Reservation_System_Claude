@@ -2,7 +2,10 @@ import { AppBar, Box, Button, Container, Toolbar, Typography } from '@mui/materi
 import { NavLink, Outlet } from 'react-router-dom'
 
 /** Pages that exist so far; each later spec adds its own link. */
-const NAV_ITEMS = [{ to: '/rooms', label: 'Rooms' }]
+const NAV_ITEMS = [
+  { to: '/rooms', label: 'Rooms' },
+  { to: '/users', label: 'Users' },
+]
 
 export function Layout() {
   return (

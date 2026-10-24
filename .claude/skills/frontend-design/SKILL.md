@@ -20,7 +20,7 @@ src/pages/       RoomsPage, UsersPage, ReservationsPage, CalendarPage, ReportPag
 src/lib/         formatting helpers, pdf export
 ```
 
-Built so far: `client.ts`, `types.ts`, `rooms.ts`, `RoomsPage`, `ErrorAlert`, `Layout` and `lib/equipment.ts`. The other files are planned for specs 09-12 and are created by the spec that needs them.
+Built so far: `client.ts`, `types.ts`, `rooms.ts`, `users.ts`, `RoomsPage`, `UsersPage`, `ErrorAlert`, `Layout` and `lib/equipment.ts`. The other files are planned for specs 10-12 and are created by the spec that needs them.
 
 ## Page pattern
 

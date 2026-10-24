@@ -19,3 +19,11 @@ export interface ApiErrorItem {
 export interface ApiErrorBody {
   errors: ApiErrorItem[]
 }
+
+export interface UserDto {
+  id: string
+  firstName: string
+  lastName: string
+  /** Number of Booked reservations the user organizes; calculated by the API. */
+  activeReservationCount: number
+}
