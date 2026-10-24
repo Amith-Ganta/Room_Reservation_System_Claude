@@ -56,3 +56,31 @@ export interface CreateReservationRequest {
   end: string
   attendeeCount: number
 }
+
+/** One row of the usage report; every figure and the flag are calculated by the API. */
+export interface RoomUsageDto {
+  roomId: string
+  roomName: string
+  floor: number
+  totalBookings: number
+  completedBookings: number
+  cancelledBookings: number
+  upcomingBookings: number
+  plannedHours: number
+  usedHours: number
+  /** Null when the room has no planned hours in the period. */
+  utilizationPercent: number | null
+  isOftenBookedRarelyUsed: boolean
+}
+
+export interface UsageReportDto {
+  /** ISO 8601 timestamp with an offset. */
+  generatedAt: string
+  /** Echo of the query; null when the bound was not sent. */
+  from: string | null
+  to: string | null
+  minBookingsToFlag: number
+  underusedThresholdPercent: number
+  /** Already in display order: flagged first, then most bookings, then name. */
+  rooms: RoomUsageDto[]
+}
