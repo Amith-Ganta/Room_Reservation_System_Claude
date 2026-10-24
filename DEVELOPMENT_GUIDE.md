@@ -94,8 +94,9 @@ The spec files are in `.claude/specs/`. Status is tracked in the table in `CLAUD
 | 12 | `report-pdf` | Usage report page and PDF export |
 | 13 | `docs-readme` | README and this guide |
 
-Specs 09 to 13 use the standard sections of `/create-spec`, in this order: Overview, Depends on, Endpoints / Pages,
+Specs 09 to 12 use the standard sections of `/create-spec`, in this order: Overview, Depends on, Endpoints / Pages,
 Data changes, Files to change, Files to create, New dependencies, Rules for implementation and Definition of done.
+Spec 13 adds two content sections (README content and DEVELOPMENT_GUIDE.md content) for the documents it describes.
 Specs 01 to 08 were written before that template and use similar sections with their own headings. The last section
 is a checklist that ends with the build and test commands, so "done" is something that can be checked.
 

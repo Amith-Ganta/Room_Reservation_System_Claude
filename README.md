@@ -176,6 +176,7 @@ flowchart TB
     rs --> repo
     us --> life
     us --> repo
+    qs --> life
     qs --> repo
     val --> repo
     life --> repo
@@ -705,8 +706,8 @@ Versions are taken from `RoomReservation.Api.csproj`, `RoomReservation.Tests.csp
   **worked** and the list is empty: "No users yet.", "No rooms match these filters." or "No reservations match.".
   The error alert and a Retry button appear above the table.
 - **`AllowedHosts`.** `appsettings.json` sets `AllowedHosts` to `localhost;127.0.0.1;[::1]`. A real deployment needs
-  its own host value. A request with any other `Host` header is answered by ASP.NET Core itself with a plain
-  `400 Invalid Hostname`, not with the JSON error body.
+  its own host value. A request with any other `Host` header is answered by ASP.NET Core itself with a
+  `400 Bad Request - Invalid Hostname` page (HTML), not with the JSON error body.
 - **PDF fonts.** The usage report PDF uses the jsPDF built-in font, which covers Latin text only. Room names with
   other characters may print wrongly in the PDF. The on-screen table is not affected.
 
