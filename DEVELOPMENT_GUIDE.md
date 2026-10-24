@@ -68,7 +68,7 @@ cannot spread.
 | `internship-quality-reviewer` | opus | Read, Bash, Grep | Reviews the diff for layering, rule placement, naming, test quality and spec compliance. **Read-only.** |
 | `internship-security-reviewer` | opus | Read, Bash, Grep | Reviews the diff for input validation, error handling, headers, CORS and robustness. The missing authentication is by design and is not reported. **Read-only.** |
 | `internship-test-runner` | sonnet | Read, Bash, Grep | Runs `dotnet test` (one class or the whole suite) and reports totals and the likely cause of each failure. **Read-only, never fixes code.** |
-| `internship-test-writer` | sonnet | Read, Write, Edit, Glob, Grep | Writes xUnit tests from the spec. It writes **only** under `backend/RoomReservation.Tests/` and reads the implementation only to learn names and signatures. |
+| `internship-test-writer` | sonnet | Read, Write, Edit, Glob, Grep | Writes xUnit tests from the spec. It is instructed to write **only** under `backend/RoomReservation.Tests/` (a rule in its prompt, not a path limit in `settings.json`) and reads the implementation only to learn names and signatures. |
 
 Reviewers and the test runner never edit a file. Only the test writer writes, and only tests.
 
@@ -94,8 +94,9 @@ The spec files are in `.claude/specs/`. Status is tracked in the table in `CLAUD
 | 12 | `report-pdf` | Usage report page and PDF export |
 | 13 | `docs-readme` | README and this guide |
 
-Every spec has the same sections, in the same order: Overview, Depends on, Endpoints / Pages, Data changes,
-Files to change, Files to create, New dependencies, Rules for implementation and Definition of done. The last section
+Specs 09 to 13 use the standard sections of `/create-spec`, in this order: Overview, Depends on, Endpoints / Pages,
+Data changes, Files to change, Files to create, New dependencies, Rules for implementation and Definition of done.
+Specs 01 to 08 were written before that template and use similar sections with their own headings. The last section
 is a checklist that ends with the build and test commands, so "done" is something that can be checked.
 
 ---

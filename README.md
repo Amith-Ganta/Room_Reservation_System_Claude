@@ -57,9 +57,10 @@ npm run dev
 - App: http://localhost:5173
 
 The port is fixed (`strictPort`). If something else already uses 5173, Vite stops instead of choosing another port.
-The reason is CORS: the origin in `Cors:AllowedOrigins` (see [Configuration](#configuration)) must match the address
-of the front end. The dev server also proxies every `/api` request to `http://localhost:5080`, so the browser talks
-to one origin.
+The dev server proxies every `/api` request to `http://localhost:5080`, so the browser talks to one origin and CORS
+is not involved in this setup. CORS only matters if a page calls port 5080 directly. In that case the origin in
+`Cors:AllowedOrigins` (see [Configuration](#configuration)) must match the address of the front end, which is why the
+port is kept fixed at 5173.
 
 ### 3. Run the checks
 
@@ -206,7 +207,7 @@ flowchart LR
 Every error uses the same body, so a client has one parser for all of them:
 
 ```json
-{ "errors": [ { "code": "R5_CAPACITY_EXCEEDED", "message": "The room seats 8 people, but 12 are attending." } ] }
+{ "errors": [ { "code": "R5_CAPACITY_EXCEEDED", "message": "Room 'Atlas' seats 8 people, but 12 attendees were given." } ] }
 ```
 
 ---
@@ -433,7 +434,7 @@ flowchart TD
 
     flagged --> sort["Order: flagged first,<br/>then total bookings descending,<br/>then room name"]
     plain --> sort
-    sort --> dto(["UsageReportDto<br/>generatedAt, from, to, both thresholds, rows"])
+    sort --> dto(["UsageReportDto<br/>generatedAt, from, to, both thresholds, rooms"])
 ```
 
 Hours are derived from ticks and rounded to two decimals. The flag uses a strict comparison with the threshold
@@ -469,14 +470,14 @@ curl -X POST http://localhost:5080/api/reservations \
         "roomId": "<room id from GET /api/rooms>",
         "userId": "<user id from GET /api/users>",
         "title": "Design review",
-        "start": "2030-01-15T10:00:00Z",
-        "end": "2030-01-15T11:00:00Z",
+        "start": "<a date within 90 days, for example 2026-11-03T10:00:00Z>",
+        "end": "<one hour later, for example 2026-11-03T11:00:00Z>",
         "attendeeCount": 4
       }'
 ```
 
-The request above is rejected with `422 R6_BEYOND_HORIZON` unless the date is within 90 days, so use a date close to
-today. A response carries the room and organizer names, so a client needs no second call:
+Use a start close to today: a start more than 90 days ahead is rejected with `422 R6_BEYOND_HORIZON`, and a start in
+the past with `422 R4_PAST_START`. A response carries the room and organizer names, so a client needs no second call:
 
 ```json
 {
@@ -704,7 +705,8 @@ Versions are taken from `RoomReservation.Api.csproj`, `RoomReservation.Tests.csp
   **worked** and the list is empty: "No users yet.", "No rooms match these filters." or "No reservations match.".
   The error alert and a Retry button appear above the table.
 - **`AllowedHosts`.** `appsettings.json` sets `AllowedHosts` to `localhost;127.0.0.1;[::1]`. A real deployment needs
-  its own host value.
+  its own host value. A request with any other `Host` header is answered by ASP.NET Core itself with a plain
+  `400 Invalid Hostname`, not with the JSON error body.
 - **PDF fonts.** The usage report PDF uses the jsPDF built-in font, which covers Latin text only. Room names with
   other characters may print wrongly in the PDF. The on-screen table is not affected.
 
