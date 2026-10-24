@@ -127,6 +127,9 @@ public class RoomsEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     [InlineData("minCapacity=abc")]
     [InlineData("minCapacity=99999999999")]
     [InlineData("floor=abc")]
+    [InlineData("minCapacity=10001")]
+    [InlineData("floor=201")]
+    [InlineData("floor=-11")]
     public async Task Invalid_query_values_return_400_invalid_request(string query)
     {
         var client = await ClientAsync();

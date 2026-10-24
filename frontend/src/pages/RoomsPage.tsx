@@ -3,7 +3,6 @@ import {
   Button,
   Checkbox,
   Chip,
-  CircularProgress,
   FormControl,
   InputLabel,
   ListItemText,
@@ -26,6 +25,7 @@ import { ApiError } from '../api/client'
 import { listRooms } from '../api/rooms'
 import type { ApiErrorItem, EquipmentName, RoomDto } from '../api/types'
 import { ErrorAlert } from '../components/ErrorAlert'
+import { LoadingIndicator } from '../components/LoadingIndicator'
 import { ALL_EQUIPMENT, EQUIPMENT_LABELS } from '../lib/equipment'
 
 const TYPING_DELAY_MS = 300
@@ -40,7 +40,9 @@ const NO_TEXT_FILTERS: TextFilters = { minCapacity: '', floor: '' }
 /** Turns the text of a number field into a whole number, or undefined when it is empty or not a whole number. */
 function toWholeNumber(text: string): number | undefined {
   const trimmed = text.trim()
-  return /^-?\d+$/.test(trimmed) ? Number(trimmed) : undefined
+  const value = /^-?\d+$/.test(trimmed) ? Number(trimmed) : undefined
+  // A digit string beyond 2^53 loses precision; treat it as invalid instead of sending a rounded number.
+  return value !== undefined && Number.isSafeInteger(value) ? value : undefined
 }
 
 /** Minimum capacity must be a whole number >= 1. */
@@ -196,7 +198,7 @@ export function RoomsPage() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={6} align="center">
-                  <CircularProgress size={28} aria-label="Loading rooms" />
+                  <LoadingIndicator label="Loading rooms" />
                 </TableCell>
               </TableRow>
             ) : rooms.length === 0 ? (

@@ -71,6 +71,26 @@ public class ErrorHandlingTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task Responses_carry_security_headers_and_api_responses_are_not_cached()
+    {
+        var response = await _client.GetAsync("/api/rooms");
+
+        response.Headers.GetValues("X-Content-Type-Options").Should().Equal("nosniff");
+        response.Headers.GetValues("X-Frame-Options").Should().Equal("DENY");
+        response.Headers.GetValues("Referrer-Policy").Should().Equal("no-referrer");
+        response.Headers.GetValues("Cache-Control").Should().Equal("no-store");
+    }
+
+    [Fact]
+    public async Task A_hostile_property_name_is_not_echoed_in_the_error_message()
+    {
+        var response = await _client.PostAsync("/test/echo", Json("{ \"<script>alert(1)</script>\": 1, \"mood\": \"Furious\" }"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().NotContain("<script>");
+    }
+
+    [Fact]
     public async Task A_valid_string_enum_is_accepted()
     {
         var response = await _client.PostAsync("/test/echo", Json("{ \"mood\": \"Sad\" }"));
