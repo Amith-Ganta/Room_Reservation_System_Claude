@@ -1,6 +1,5 @@
 import {
   Button,
-  CircularProgress,
   Paper,
   Stack,
   Table,
@@ -17,6 +16,7 @@ import { ApiError } from '../api/client'
 import type { ApiErrorItem, UserDto } from '../api/types'
 import { listUsers } from '../api/users'
 import { ErrorAlert } from '../components/ErrorAlert'
+import { LoadingIndicator } from '../components/LoadingIndicator'
 
 type SortKey = 'lastName' | 'activeReservationCount'
 type SortDirection = 'asc' | 'desc'
@@ -75,6 +75,9 @@ export function UsersPage() {
     return () => controller.abort()
   }, [reloadCount])
 
+  // After a click the button stays mounted until the retry finishes, so the keyboard focus is not lost.
+  const showRetry = errors.length > 0 || (loading && reloadCount > 0)
+
   const sortedUsers = useMemo(() => sortUsers(users, sort), [users, sort])
 
   /** First click on a column sorts ascending; clicking the active column flips the direction. */
@@ -97,10 +100,19 @@ export function UsersPage() {
       </Typography>
 
       <ErrorAlert errors={errors} />
-      {errors.length > 0 && (
+      {showRetry && (
         <div>
-          <Button variant="outlined" onClick={() => setReloadCount((count) => count + 1)}>
-            Retry
+          {/* aria-disabled (not disabled) keeps keyboard focus on the button while the retry runs. */}
+          <Button
+            variant="outlined"
+            aria-disabled={loading}
+            onClick={() => {
+              if (!loading) {
+                setReloadCount((count) => count + 1)
+              }
+            }}
+          >
+            {loading ? 'Retrying…' : 'Retry'}
           </Button>
         </div>
       )}
@@ -135,7 +147,7 @@ export function UsersPage() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={4} align="center">
-                  <CircularProgress size={28} aria-label="Loading users" />
+                  <LoadingIndicator label="Loading users" />
                 </TableCell>
               </TableRow>
             ) : sortedUsers.length === 0 ? (

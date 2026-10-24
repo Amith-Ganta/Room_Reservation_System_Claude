@@ -15,12 +15,12 @@ Apply this skill whenever building or modifying code in `frontend/`.
 
 ```
 src/api/         client.ts (ApiError), types.ts (DTO types mirroring the API), rooms.ts, users.ts, reservations.ts, reports.ts
-src/components/  Layout, ErrorAlert, shared dialogs
+src/components/  Layout, ErrorAlert, ErrorBoundary, LoadingIndicator, shared dialogs
 src/pages/       RoomsPage, UsersPage, ReservationsPage, CalendarPage, ReportPage
 src/lib/         formatting helpers, pdf export
 ```
 
-Built so far: `client.ts`, `types.ts`, `rooms.ts`, `users.ts`, `RoomsPage`, `UsersPage`, `ErrorAlert`, `Layout` and `lib/equipment.ts`. The other files are planned for specs 10-12 and are created by the spec that needs them.
+Built so far: `client.ts`, `types.ts`, `rooms.ts`, `users.ts`, `RoomsPage`, `UsersPage`, `ErrorAlert`, `ErrorBoundary`, `LoadingIndicator`, `Layout` and `lib/equipment.ts`. The other files are planned for specs 10-12 and are created by the spec that needs them.
 
 ## Page pattern
 

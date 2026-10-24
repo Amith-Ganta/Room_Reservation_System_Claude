@@ -20,5 +20,5 @@ export function listRooms(filters: RoomFilters, signal?: AbortSignal): Promise<R
     query.set('floor', String(filters.floor))
   }
   const text = query.toString()
-  return request<RoomDto[]>(text.length > 0 ? `/api/rooms?${text}` : '/api/rooms', { signal })
+  return request<RoomDto[]>(text.length > 0 ? `/api/rooms?${text}` : '/api/rooms', { signal, expect: 'array' })
 }

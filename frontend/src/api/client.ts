@@ -37,6 +37,10 @@ function isErrorBody(value: unknown): value is ApiErrorBody {
   return Array.isArray(errors) && errors.length > 0 && errors.every(isErrorItem)
 }
 
+function isPlainObject(value: unknown): boolean {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 async function readJson(response: Response): Promise<unknown> {
   const text = await response.text()
   if (text.length === 0) {
@@ -53,11 +57,13 @@ export interface RequestOptions {
   method?: string
   body?: unknown
   signal?: AbortSignal
+  /** Shape the body must have on success. A mismatch becomes an UNEXPECTED_RESPONSE error instead of a crash later. */
+  expect?: 'array' | 'object'
 }
 
 /** Calls the API (relative path, proxied by Vite in development) and returns the parsed JSON body. */
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, signal } = options
+  const { method = 'GET', body, signal, expect } = options
   const headers: Record<string, string> = { Accept: 'application/json' }
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json'
@@ -93,6 +99,11 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
         code: `HTTP_${response.status}`,
         message: `The server answered ${response.status} ${response.statusText}`.trim(),
       },
+    ])
+  }
+  if (expect === 'array' ? !Array.isArray(payload) : expect === 'object' && !isPlainObject(payload)) {
+    throw new ApiError(response.status, [
+      { code: 'UNEXPECTED_RESPONSE', message: 'The server answered with data this page cannot read.' },
     ])
   }
   return payload as T

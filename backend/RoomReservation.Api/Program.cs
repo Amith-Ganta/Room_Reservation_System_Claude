@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using RoomReservation.Api.Common;
 using RoomReservation.Api.Configuration;
@@ -8,6 +9,9 @@ using RoomReservation.Api.Repositories;
 using RoomReservation.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Every request body is a small JSON document; the 30 MB Kestrel default would let one call tie up memory.
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 64 * 1024);
 
 builder.Services
     .AddOptions<BookingRulesOptions>()
@@ -71,9 +75,35 @@ if (app.Configuration.GetValue("Seed:Enabled", false))
         scope.ServiceProvider.GetRequiredService<TimeProvider>());
 }
 
+// The API only serves JSON: stop browsers from sniffing it as something else, framing it, or caching live data.
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        var headers = context.Response.Headers;
+        headers["X-Content-Type-Options"] = "nosniff";
+        headers["X-Frame-Options"] = "DENY";
+        headers["Referrer-Policy"] = "no-referrer";
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            headers["Cache-Control"] = "no-store";
+        }
+        return Task.CompletedTask;
+    });
+    await next();
+});
+
 // Unhandled exceptions are logged by the middleware; the client only gets the standard error body.
 app.UseExceptionHandler(errorApp => errorApp.Run(context =>
 {
+    // Kestrel raises this when the body passes the size limit above; that is a client mistake, not a server fault.
+    if (context.Features.Get<IExceptionHandlerFeature>()?.Error is BadHttpRequestException { StatusCode: StatusCodes.Status413PayloadTooLarge })
+    {
+        context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+        return context.Response.WriteAsJsonAsync(new ApiErrorResponse(
+            [new ApiError(ErrorCodes.PayloadTooLarge, "The request body is too large.")]));
+    }
+
     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
     return context.Response.WriteAsJsonAsync(new ApiErrorResponse(
         [new ApiError(ErrorCodes.InternalError, "An unexpected error occurred.")]));
