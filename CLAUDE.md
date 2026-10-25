@@ -17,7 +17,7 @@ backend/
   RoomReservation.sln
   RoomReservation.Api/
     Common/          Result<T>, ErrorCodes, ApiErrorResponse
-    Configuration/   BookingRulesOptions, UsageReportOptions
+    Configuration/   BookingRulesOptions, UsageReportOptions, PagingOptions
     Controllers/     thin: bind, call service, map Result to HTTP
     Data/            AppDbContext, DbSeeder
     Domain/          Room, User, Reservation, enums, filters
@@ -55,6 +55,7 @@ frontend/            React + TS app (src/api, src/pages, src/components, src/lib
 | 11 | calendar-view | merged |
 | 12 | report-pdf | merged |
 | 13 | docs-readme | merged |
+| 14 | list-paging | in progress |
 
 Do not implement a stub unless the active task targets that spec. Update this table when a spec is merged.
 

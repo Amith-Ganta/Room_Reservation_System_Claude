@@ -43,7 +43,7 @@ public class RoomsEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     {
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        return json.RootElement.EnumerateArray().Select(room => room.GetProperty("name").GetString()!).ToList();
+        return json.RootElement.GetProperty("items").EnumerateArray().Select(room => room.GetProperty("name").GetString()!).ToList();
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class RoomsEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        var rooms = json.RootElement.EnumerateArray().ToList();
+        var rooms = json.RootElement.GetProperty("items").EnumerateArray().ToList();
         rooms.Select(r => r.GetProperty("name").GetString()).Should().Equal("Cellar", "Closed", "Small", "Large", "Medium");
         var large = rooms.Single(r => r.GetProperty("name").GetString() == "Large");
         large.EnumerateObject().Select(p => p.Name).Should().Equal("id", "name", "capacity", "floor", "equipment", "isActive");
@@ -151,6 +151,6 @@ public class RoomsEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var parameters = json.RootElement.GetProperty("paths").GetProperty("/api/Rooms").GetProperty("get").GetProperty("parameters");
         parameters.EnumerateArray().Select(p => p.GetProperty("name").GetString())
-            .Should().BeEquivalentTo("MinCapacity", "Equipment", "Floor");
+            .Should().BeEquivalentTo("MinCapacity", "Equipment", "Floor", "Page", "PageSize");
     }
 }

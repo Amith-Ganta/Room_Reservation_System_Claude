@@ -1,5 +1,7 @@
 using AutoMapper;
+using Microsoft.Extensions.Options;
 using RoomReservation.Api.Common;
+using RoomReservation.Api.Configuration;
 using RoomReservation.Api.Domain;
 using RoomReservation.Api.Dtos;
 using RoomReservation.Api.Repositories;
@@ -8,15 +10,17 @@ namespace RoomReservation.Api.Services;
 
 public interface IRoomService
 {
-    Task<Result<IReadOnlyList<RoomDto>>> ListAsync(RoomListQuery query, CancellationToken ct = default);
+    Task<Result<PagedResult<RoomDto>>> ListAsync(RoomListQuery query, CancellationToken ct = default);
 }
 
-public sealed class RoomService(IRoomRepository rooms, IMapper mapper) : IRoomService
+public sealed class RoomService(IRoomRepository rooms, IMapper mapper, IOptions<PagingOptions> paging) : IRoomService
 {
-    public async Task<Result<IReadOnlyList<RoomDto>>> ListAsync(RoomListQuery query, CancellationToken ct = default)
+    public async Task<Result<PagedResult<RoomDto>>> ListAsync(RoomListQuery query, CancellationToken ct = default)
     {
         var filter = mapper.Map<RoomFilter>(query);
-        var found = await rooms.ListAsync(filter, ct);
-        return Result<IReadOnlyList<RoomDto>>.Ok(mapper.Map<List<RoomDto>>(found));
+        var page = query.ToRequest(paging.Value);
+        var found = await rooms.ListPagedAsync(filter, page, ct);
+        return Result<PagedResult<RoomDto>>.Ok(
+            PagedResult<RoomDto>.Create(mapper.Map<List<RoomDto>>(found.Items), page, found.TotalCount));
     }
 }

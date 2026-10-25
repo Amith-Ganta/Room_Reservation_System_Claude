@@ -93,6 +93,7 @@ The spec files are in `.claude/specs/`. Status is tracked in the table in `CLAUD
 | 11 | `calendar-view` | Calendar view with FullCalendar |
 | 12 | `report-pdf` | Usage report page and PDF export |
 | 13 | `docs-readme` | README and this guide |
+| 14 | `list-paging` | Server-side paging of the three list endpoints |
 
 Specs 09 to 12 use the standard sections of `/create-spec`, in this order: Overview, Depends on, Endpoints / Pages,
 Data changes, Files to change, Files to create, New dependencies, Rules for implementation and Definition of done.

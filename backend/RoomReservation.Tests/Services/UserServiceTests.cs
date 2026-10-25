@@ -3,6 +3,7 @@ using Microsoft.Extensions.Time.Testing;
 using RoomReservation.Api.Common;
 using RoomReservation.Api.Data;
 using RoomReservation.Api.Domain;
+using RoomReservation.Api.Dtos;
 using RoomReservation.Api.Repositories;
 using RoomReservation.Api.Services;
 using RoomReservation.Tests.Mapping;
@@ -25,7 +26,7 @@ public class UserServiceTests
         var reservations = new ReservationRepository(_db);
         return new UserService(
             new UserRepository(_db), reservations, new ReservationLifecycle(reservations, _clock),
-            MappingProfileTests.NewConfiguration().CreateMapper());
+            MappingProfileTests.NewConfiguration().CreateMapper(), TestDb.Paging());
     }
 
     private User AddUser(string first = "Ann", string last = "Lee")
@@ -45,9 +46,9 @@ public class UserServiceTests
     private async Task<IReadOnlyList<RoomReservation.Api.Dtos.UserDto>> ListAsync()
     {
         await _db.SaveChangesAsync();
-        var result = await Service().ListAsync();
+        var result = await Service().ListAsync(new UserListQuery());
         result.Status.Should().Be(ResultStatus.Ok);
-        return result.Value!;
+        return result.Value!.Items;
     }
 
     [Fact]

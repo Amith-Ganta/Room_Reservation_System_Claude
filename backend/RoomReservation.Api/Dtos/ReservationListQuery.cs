@@ -6,7 +6,7 @@ using RoomReservation.Api.Domain;
 namespace RoomReservation.Api.Dtos;
 
 /// <summary>Query string of <c>GET /api/reservations</c>. Invalid values are rejected by model validation (HTTP 400).</summary>
-public sealed class ReservationListQuery : IValidatableObject
+public sealed class ReservationListQuery : PageQuery, IValidatableObject
 {
     /// <summary>Keep reservations of this room. An unknown id gives an empty list.</summary>
     public Guid? RoomId { get; set; }

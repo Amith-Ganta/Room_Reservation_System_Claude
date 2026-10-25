@@ -15,12 +15,14 @@ import {
   Typography,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
+import { fetchAllPages } from '../api/paging'
 import { listReservations, cancelReservation, endReservation } from '../api/reservations'
 import { listRooms } from '../api/rooms'
 import type { ApiErrorItem, ReservationDto, ReservationStatus, RoomDto, UserDto } from '../api/types'
 import { listUsers } from '../api/users'
 import { ConfirmActionDialog } from '../components/ConfirmActionDialog'
 import { ErrorAlert } from '../components/ErrorAlert'
+import { ListPager, type PageInfo } from '../components/ListPager'
 import { LoadingIndicator } from '../components/LoadingIndicator'
 import { ReservationFormDialog } from '../components/ReservationFormDialog'
 import { formatDateTime, toIsoWithOffset } from '../lib/dateTime'
@@ -70,6 +72,8 @@ function describe(reservation: ReservationDto): string {
 export function ReservationsPage() {
   const [filters, setFilters] = useState<Filters>(NO_FILTERS)
   const [reservations, setReservations] = useState<ReservationDto[]>([])
+  const [paging, setPaging] = useState<{ page: number; pageSize?: number }>({ page: 1 })
+  const [pageInfo, setPageInfo] = useState<PageInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [errors, setErrors] = useState<ApiErrorItem[]>([])
   // Changing this value re-runs the list effect (Retry, and refresh after a write or a stale answer).
@@ -90,7 +94,11 @@ export function ReservationsPage() {
     const controller = new AbortController()
     setLookupsLoading(true)
     setLookupErrors([])
-    Promise.all([listRooms({}, controller.signal), listUsers(controller.signal)])
+    // The drop-downs need every room and user, so all pages are read.
+    Promise.all([
+      fetchAllPages((params, signal) => listRooms(params, signal), controller.signal),
+      fetchAllPages((params, signal) => listUsers(params, signal), controller.signal),
+    ])
       .then(([roomResult, userResult]) => {
         if (controller.signal.aborted) {
           return
@@ -125,6 +133,8 @@ export function ReservationsPage() {
         status: status === '' ? undefined : status,
         from: toIsoWithOffset(from),
         to: toIsoWithOffset(to),
+        page: paging.page,
+        pageSize: paging.pageSize,
       },
       controller.signal,
     )
@@ -132,7 +142,13 @@ export function ReservationsPage() {
         if (controller.signal.aborted) {
           return
         }
-        setReservations(result)
+        // After a write or a filter change the list can be shorter than the page asked for: go to the last page.
+        if (result.items.length === 0 && result.totalPages > 0 && result.page > result.totalPages) {
+          setPaging((current) => ({ ...current, page: result.totalPages }))
+          return
+        }
+        setReservations(result.items)
+        setPageInfo({ pageSize: result.pageSize, totalCount: result.totalCount })
         setLoading(false)
       })
       .catch((error: unknown) => {
@@ -140,11 +156,12 @@ export function ReservationsPage() {
           return
         }
         setReservations([])
+        setPageInfo(null)
         setErrors(toErrorItems(error))
         setLoading(false)
       })
     return () => controller.abort()
-  }, [roomId, userId, status, from, to, reloadCount])
+  }, [roomId, userId, status, from, to, paging, reloadCount])
 
   function reload() {
     setReloadCount((count) => count + 1)
@@ -152,6 +169,8 @@ export function ReservationsPage() {
 
   function changeFilter(change: Partial<Filters>) {
     setFilters((current) => ({ ...current, ...change }))
+    // A new filter always starts on the first page.
+    setPaging((current) => (current.page === 1 ? current : { ...current, page: 1 }))
   }
 
   function finishWrite(message: string) {
@@ -362,6 +381,12 @@ export function ReservationsPage() {
             )}
           </TableBody>
         </Table>
+        <ListPager
+          label="Reservations"
+          page={paging.page}
+          info={pageInfo}
+          onChange={(page, pageSize) => setPaging((current) => ({ page, pageSize: pageSize ?? current.pageSize }))}
+        />
       </TableContainer>
 
       {dialog?.kind === 'form' && (

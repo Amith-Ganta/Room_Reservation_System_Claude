@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using RoomReservation.Api.Configuration;
 using RoomReservation.Api.Data;
 using RoomReservation.Api.Domain;
 
@@ -8,6 +10,10 @@ namespace RoomReservation.Tests.Repositories;
 internal static class TestDb
 {
     public static readonly DateTimeOffset Now = new(2026, 6, 1, 10, 0, 0, TimeSpan.Zero);
+
+    /// <summary>Paging limits for service tests: small enough to cross a page boundary with a handful of rows.</summary>
+    public static IOptions<PagingOptions> Paging(int defaultSize = 20, int maxSize = 100) =>
+        Options.Create(new PagingOptions { DefaultPageSize = defaultSize, MaxPageSize = maxSize });
 
     public static string NewName() => $"tests-{Guid.NewGuid()}";
 

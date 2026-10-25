@@ -6,6 +6,7 @@ import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { Box, Button, LinearProgress, MenuItem, Snackbar, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
+import { fetchAllPages } from '../api/paging'
 import { listReservations } from '../api/reservations'
 import { listRooms } from '../api/rooms'
 import type { ApiErrorItem, ReservationDto, ReservationStatus, RoomDto, UserDto } from '../api/types'
@@ -88,7 +89,8 @@ export function CalendarPage() {
     const controller = new AbortController()
     setRoomsLoading(true)
     setRoomErrors([])
-    listRooms({}, controller.signal)
+    // The room selector offers every room, so all pages are read.
+    fetchAllPages((params, signal) => listRooms(params, signal), controller.signal)
       .then((result) => {
         if (controller.signal.aborted) {
           return
@@ -114,7 +116,8 @@ export function CalendarPage() {
     const controller = new AbortController()
     setUsersLoading(true)
     setUserErrors([])
-    listUsers(controller.signal)
+    // The organizer drop-down offers every user, so all pages are read.
+    fetchAllPages((params, signal) => listUsers(params, signal), controller.signal)
       .then((result) => {
         if (controller.signal.aborted) {
           return
@@ -147,7 +150,11 @@ export function CalendarPage() {
     const controller = new AbortController()
     setLoading(true)
     setEventErrors([])
-    listReservations({ roomId, from: rangeStart, to: rangeEnd }, controller.signal)
+    // Every event of the visible range is drawn, so all pages are read.
+    fetchAllPages(
+      (params, signal) => listReservations({ roomId, from: rangeStart, to: rangeEnd, ...params }, signal),
+      controller.signal,
+    )
       .then((result) => {
         if (controller.signal.aborted) {
           return

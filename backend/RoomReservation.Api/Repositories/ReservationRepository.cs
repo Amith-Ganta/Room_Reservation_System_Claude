@@ -7,7 +7,10 @@ namespace RoomReservation.Api.Repositories;
 public interface IReservationRepository : IRepository<Reservation>
 {
     Task<Reservation?> GetWithDetailsAsync(Guid id, CancellationToken ct = default);
-    Task<IReadOnlyList<Reservation>> ListAsync(ReservationFilter filter, CancellationToken ct = default);
+
+    /// <summary>One page of reservations, newest start first, ties broken by id.</summary>
+    Task<PagedItems<Reservation>> ListPagedAsync(ReservationFilter filter, PageRequest page, CancellationToken ct = default);
+
     Task<IReadOnlyList<Reservation>> ListForReportAsync(UsageReportFilter filter, CancellationToken ct = default);
 
     /// <summary>
@@ -20,11 +23,11 @@ public interface IReservationRepository : IRepository<Reservation>
     Task<bool> HasUserOverlapAsync(Guid userId, DateTimeOffset start, DateTimeOffset end, Guid? excludeId, CancellationToken ct = default);
 
     /// <summary>
-    /// Number of Booked reservations per organizer. Users without any are absent from the result.
-    /// A booking whose end has passed still counts until <see cref="CompleteElapsedAsync"/> runs, so callers
-    /// should complete elapsed reservations first.
+    /// Number of Booked reservations per organizer, limited to the given users. Users without any are absent
+    /// from the result. A booking whose end has passed still counts until <see cref="CompleteElapsedAsync"/> runs,
+    /// so callers should complete elapsed reservations first.
     /// </summary>
-    Task<IReadOnlyDictionary<Guid, int>> CountActiveByUserAsync(CancellationToken ct = default);
+    Task<IReadOnlyDictionary<Guid, int>> CountActiveByUserAsync(IReadOnlyCollection<Guid> userIds, CancellationToken ct = default);
 
     /// <summary>Marks every Booked reservation whose planned end has passed as Completed.</summary>
     Task CompleteElapsedAsync(DateTimeOffset now, CancellationToken ct = default);
@@ -37,7 +40,7 @@ public sealed class ReservationRepository(AppDbContext db) : Repository<Reservat
 
     // Read-only: the list is AsNoTracking, so never mutate these entities and pass them to UpdateAsync
     // (that would re-attach the Room/User graph). Load via GetWithDetailsAsync or GetByIdAsync to change one.
-    public async Task<IReadOnlyList<Reservation>> ListAsync(ReservationFilter filter, CancellationToken ct = default)
+    public async Task<PagedItems<Reservation>> ListPagedAsync(ReservationFilter filter, PageRequest page, CancellationToken ct = default)
     {
         var query = Db.Reservations.AsNoTracking().Include(r => r.Room).Include(r => r.User).AsQueryable();
 
@@ -60,7 +63,7 @@ public sealed class ReservationRepository(AppDbContext db) : Repository<Reservat
         // From == To is an empty window, so nothing matches (the spec allows equal values).
         if (filter is { From: { } start, To: { } stop } && start >= stop)
         {
-            return [];
+            return new PagedItems<Reservation>([], 0);
         }
 
         if (filter.From is { } from)
@@ -73,7 +76,7 @@ public sealed class ReservationRepository(AppDbContext db) : Repository<Reservat
             query = query.Where(r => r.Start < to);
         }
 
-        return await query.OrderByDescending(r => r.Start).ToListAsync(ct);
+        return await query.OrderByDescending(r => r.Start).ThenBy(r => r.Id).ToPagedAsync(page, ct);
     }
 
     public async Task<IReadOnlyList<Reservation>> ListForReportAsync(UsageReportFilter filter, CancellationToken ct = default)
@@ -109,10 +112,16 @@ public sealed class ReservationRepository(AppDbContext db) : Repository<Reservat
             && r.Start < end
             && start < (r.EndedAt ?? r.End), ct);
 
-    public async Task<IReadOnlyDictionary<Guid, int>> CountActiveByUserAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyDictionary<Guid, int>> CountActiveByUserAsync(IReadOnlyCollection<Guid> userIds, CancellationToken ct = default)
     {
+        if (userIds.Count == 0)
+        {
+            return new Dictionary<Guid, int>();
+        }
+
+        var ids = userIds.ToList();
         var counts = await Db.Reservations
-            .Where(r => r.Status == ReservationStatus.Booked)
+            .Where(r => r.Status == ReservationStatus.Booked && ids.Contains(r.UserId))
             .GroupBy(r => r.UserId)
             .Select(group => new { UserId = group.Key, Count = group.Count() })
             .ToListAsync(ct);

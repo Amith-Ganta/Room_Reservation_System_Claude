@@ -16,6 +16,7 @@ import { ApiError } from '../api/client'
 import type { ApiErrorItem, UserDto } from '../api/types'
 import { listUsers } from '../api/users'
 import { ErrorAlert } from '../components/ErrorAlert'
+import { ListPager, type PageInfo } from '../components/ListPager'
 import { LoadingIndicator } from '../components/LoadingIndicator'
 
 type SortKey = 'lastName' | 'activeReservationCount'
@@ -26,7 +27,7 @@ interface Sort {
   direction: SortDirection
 }
 
-/** Display order only. Returns a new array; ties keep the order the API sent (the sort is stable). */
+/** Display order of the rows on the current page only: the API orders the whole list by last name. Returns a new array; ties keep the order the API sent (the sort is stable). */
 function sortUsers(users: UserDto[], sort: Sort | null): UserDto[] {
   if (sort === null) {
     return users
@@ -44,6 +45,8 @@ export function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [errors, setErrors] = useState<ApiErrorItem[]>([])
   const [sort, setSort] = useState<Sort | null>(null)
+  const [paging, setPaging] = useState<{ page: number; pageSize?: number }>({ page: 1 })
+  const [pageInfo, setPageInfo] = useState<PageInfo | null>(null)
   // Changing this value re-runs the load effect (Retry button).
   const [reloadCount, setReloadCount] = useState(0)
 
@@ -52,12 +55,18 @@ export function UsersPage() {
     const controller = new AbortController()
     setLoading(true)
     setErrors([])
-    listUsers(controller.signal)
+    listUsers({ page: paging.page, pageSize: paging.pageSize }, controller.signal)
       .then((result) => {
         if (controller.signal.aborted) {
           return
         }
-        setUsers(result)
+        // After a change elsewhere the list can be shorter than the page asked for: go to the last page that exists.
+        if (result.items.length === 0 && result.totalPages > 0 && result.page > result.totalPages) {
+          setPaging((current) => ({ ...current, page: result.totalPages }))
+          return
+        }
+        setUsers(result.items)
+        setPageInfo({ pageSize: result.pageSize, totalCount: result.totalCount })
         setLoading(false)
       })
       .catch((error: unknown) => {
@@ -65,6 +74,7 @@ export function UsersPage() {
           return
         }
         setUsers([])
+        setPageInfo(null)
         setErrors(
           error instanceof ApiError
             ? error.errors
@@ -73,7 +83,7 @@ export function UsersPage() {
         setLoading(false)
       })
     return () => controller.abort()
-  }, [reloadCount])
+  }, [reloadCount, paging])
 
   // After a click the button stays mounted until the retry finishes, so the keyboard focus is not lost.
   const showRetry = errors.length > 0 || (loading && reloadCount > 0)
@@ -168,6 +178,12 @@ export function UsersPage() {
             )}
           </TableBody>
         </Table>
+        <ListPager
+          label="Users"
+          page={paging.page}
+          info={pageInfo}
+          onChange={(page, pageSize) => setPaging((current) => ({ page, pageSize: pageSize ?? current.pageSize }))}
+        />
       </TableContainer>
     </Stack>
   )

@@ -7,9 +7,9 @@ namespace RoomReservation.Api.Controllers;
 
 public sealed class ReservationsController(IReservationService reservations) : ApiControllerBase
 {
-    /// <summary>Lists reservations, newest start first. All filters are optional and combine with AND.</summary>
+    /// <summary>Lists one page of reservations, newest start first. All filters are optional and combine with AND.</summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<ReservationDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<ReservationDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> List([FromQuery] ReservationListQuery query, CancellationToken ct) =>
         ToActionResult(await reservations.ListAsync(query, ct));

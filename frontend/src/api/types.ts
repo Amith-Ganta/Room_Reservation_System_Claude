@@ -84,3 +84,18 @@ export interface UsageReportDto {
   /** Already in display order: flagged first, then most bookings, then name. */
   rooms: RoomUsageDto[]
 }
+
+/** The envelope every list endpoint answers with; `page` starts at 1. */
+export interface PagedResult<T> {
+  items: T[]
+  page: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
+}
+
+/** Optional paging parameters; the API applies its own defaults and maximum when they are left out. */
+export interface PageParams {
+  page?: number
+  pageSize?: number
+}
