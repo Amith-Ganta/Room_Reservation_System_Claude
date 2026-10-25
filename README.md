@@ -71,11 +71,15 @@ dotnet test
 
 ```bash
 cd frontend
+npm test
 npm run build
 ```
 
-`dotnet test` runs the xUnit suite. `npm run build` runs `tsc -b` (strict TypeScript) and then `vite build`.
-There are no front-end unit tests yet (see [Known limitations](#known-limitations)).
+`dotnet test` runs the xUnit suite. `npm test` runs the front-end unit tests once (vitest, jsdom and Testing Library);
+`npm run test:watch` re-runs them while you edit. `npm run build` runs `tsc -b` (strict TypeScript) and then `vite build`.
+The front-end tests cover the API client, paging, the formatting helpers and four shared components (`ErrorAlert`,
+`ConfirmActionDialog`, `ErrorBoundary` and `ListPager`). The rules and report numbers are tested in the back end only
+(see [Known limitations](#known-limitations)).
 
 ---
 
@@ -722,5 +726,8 @@ Versions are taken from `RoomReservation.Api.csproj`, `RoomReservation.Tests.csp
   (the default outside Development) the API starts empty.
 - **Single-instance write lock.** The lock protects one process. Several instances need a database-level guarantee.
 - **Page-local sort on the Users page.** The column sort reorders the rows of the current page only; the API order (last name) spans all pages.
-- **No front-end tests yet.** The front end is covered by the type check and build only. Tests are planned.
+- **Front-end tests cover the shared code, not the pages.** The API client, paging, formatting helpers and four shared
+  components (`ErrorAlert`, `ConfirmActionDialog`, `ErrorBoundary`, `ListPager`) have unit tests. The pages (Rooms,
+  Users, Reservations, Calendar, Report), `Layout`, `LoadingIndicator`, the reservation dialogs, the PDF export and the
+  per-resource `api/*` modules are covered by the type check and build only.
 - **Report PDF is Latin only** (see above).

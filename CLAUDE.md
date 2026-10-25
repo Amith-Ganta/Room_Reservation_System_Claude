@@ -56,6 +56,7 @@ frontend/            React + TS app (src/api, src/pages, src/components, src/lib
 | 12 | report-pdf | merged |
 | 13 | docs-readme | merged |
 | 14 | list-paging | merged |
+| 15 | frontend-tests | in progress |
 
 Do not implement a stub unless the active task targets that spec. Update this table when a spec is merged.
 
@@ -77,7 +78,7 @@ Error body: `{ "errors": [ { "code", "message" } ] }`. HTTP: Invalid 422, NotFou
 ## Subagent Policy
 
 Subagents MUST NOT: push, merge, commit, run `dotnet publish`, install packages without confirmation, or edit files outside their remit.
-Subagents MAY: read any file, run `dotnet build` / `dotnet test` / `npm run build`, write tests under `backend/RoomReservation.Tests/`.
+Subagents MAY: read any file, run `dotnet build` / `dotnet test` / `npm test` / `npm run build`, write tests under `backend/RoomReservation.Tests/`.
 Reviewers and the test runner are read-only.
 
 ## Warnings

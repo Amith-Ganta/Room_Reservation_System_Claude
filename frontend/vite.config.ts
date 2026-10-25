@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 // In development the browser talks to Vite only; /api is forwarded to the ASP.NET Core API.
@@ -10,5 +10,10 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:5080',
     },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 })

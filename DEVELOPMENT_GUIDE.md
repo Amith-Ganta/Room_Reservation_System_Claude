@@ -118,7 +118,7 @@ These rules are in `CLAUDE.md` and in `.claude/settings.json`. They are part of 
 **Subagents**
 
 - Subagents must not push, merge, commit, run `dotnet publish` or install packages without confirmation.
-- Subagents may read any file, run `dotnet build`, `dotnet test` and `npm run build`, and write tests under
+- Subagents may read any file, run `dotnet build`, `dotnet test`, `npm test` and `npm run build`, and write tests under
   `backend/RoomReservation.Tests/`.
 
 **Code rules** (each one protects a design decision explained in the README)
@@ -150,11 +150,15 @@ dotnet run --project RoomReservation.Api --launch-profile http
 ```
 
 ```bash
-# Front end: install, run and type-check
+# Front end: install, run, test and type-check
 cd frontend
 npm install
 npm run dev
+npm test
 npm run build
 ```
 
-Before a PR, `dotnet build`, `dotnet test` and (for front-end changes) `npm run build` must all pass.
+`npm test` runs vitest once; `npm run test:watch` keeps it running while you edit. Tests sit next to the code they
+cover (`*.test.ts` and `*.test.tsx`). Test files import `describe`, `it`, `expect` and `vi` from `vitest` (globals are off).
+
+Before a PR, `dotnet build`, `dotnet test` and (for front-end changes) `npm test` and `npm run build` must all pass.
