@@ -57,6 +57,7 @@ frontend/            React + TS app (src/api, src/pages, src/components, src/lib
 | 13 | docs-readme | merged |
 | 14 | list-paging | merged |
 | 15 | frontend-tests | merged |
+| 16 | xunit-v3-migration | merged |
 
 Do not implement a stub unless the active task targets that spec. Update this table when a spec is merged.
 
