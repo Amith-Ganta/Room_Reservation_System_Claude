@@ -42,8 +42,8 @@ None in the project. The workflow uses three GitHub actions, each pinned to a ma
 - Merge only after the workflow run on the pull request is green.
 
 ## Definition of done
-- [ ] `global.json` pins the SDK to 8.0.x and `dotnet test` still works with SDK 8.0.426.
-- [ ] `.github/workflows/ci.yml` exists and runs on `pull_request` and on `push` to `main`.
-- [ ] The workflow run on the pull request is green: the back-end job passes all 318 tests and the front-end job passes build and all 98 tests.
-- [ ] `README.md` shows the CI badge and `DEVELOPMENT_GUIDE.md` lists the spec.
-- [ ] No file under `backend/` or `frontend/` changed.
+- [x] `global.json` pins the SDK to 8.0.x and `dotnet test` still works with SDK 8.0.426.
+- [x] `.github/workflows/ci.yml` exists and runs on `pull_request` and on `push` to `main`.
+- [x] The workflow run on the pull request is green: the back-end job passes all 318 tests and the front-end job passes build and all 98 tests.
+- [x] `README.md` shows the CI badge and `DEVELOPMENT_GUIDE.md` lists the spec.
+- [x] No file under `backend/` or `frontend/` changed.
