@@ -16,6 +16,8 @@ None.
 None.
 
 ## Files to create
+- `global.json`: pins the .NET SDK to 8.0.x (`rollForward: latestFeature`). The first CI run showed that the Linux runner also has the .NET 10 SDK, which
+  refuses `dotnet test` for an xunit.v3 project (the Microsoft.Testing.Platform VSTest error). Without the pin, CI and any machine with a newer SDK use the wrong one.
 - `.github/workflows/ci.yml`: two independent jobs on `ubuntu-latest`, triggered by `push` to `main` and by `pull_request`.
   - `backend`: .NET SDK 8.0.x; `dotnet restore`, `dotnet build --configuration Release`, `dotnet test --no-build` on `backend/RoomReservation.sln`.
   - `frontend`: Node 22 with the npm cache; in `frontend`: `npm ci`, `npm run build` (strict type check and production build), `npm test`.
@@ -40,6 +42,7 @@ None in the project. The workflow uses three GitHub actions, each pinned to a ma
 - Merge only after the workflow run on the pull request is green.
 
 ## Definition of done
+- [ ] `global.json` pins the SDK to 8.0.x and `dotnet test` still works with SDK 8.0.426.
 - [ ] `.github/workflows/ci.yml` exists and runs on `pull_request` and on `push` to `main`.
 - [ ] The workflow run on the pull request is green: the back-end job passes all 318 tests and the front-end job passes build and all 98 tests.
 - [ ] `README.md` shows the CI badge and `DEVELOPMENT_GUIDE.md` lists the spec.
