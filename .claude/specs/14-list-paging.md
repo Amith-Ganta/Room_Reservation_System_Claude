@@ -90,13 +90,13 @@ None.
 10. No new package. No `[Authorize]`, no migration.
 
 ## Definition of done
-- [ ] `dotnet build` has no new warning and `dotnet test` passes.
-- [ ] Tests cover: envelope shape on all three endpoints; default page size from configuration; `pageSize` above the
+- [x] `dotnet build` has no new warning and `dotnet test` passes.
+- [x] Tests cover: envelope shape on all three endpoints; default page size from configuration; `pageSize` above the
       maximum is clamped; `page=0`, `pageSize=0`, negative and non-numeric values give 400; a page past the end is an
       empty 200 with the right `totalCount`; filters change `totalCount`; pages do not overlap and together contain
       every row; the usage report still lists every room even when rooms outnumber one page.
-- [ ] `npm run build` passes.
-- [ ] `/rooms`, `/users` and `/reservations` show a pager and change page without a full reload; a filter change
+- [x] `npm run build` passes.
+- [x] `/rooms`, `/users` and `/reservations` show a pager and change page without a full reload; a filter change
       returns to page 1.
-- [ ] The calendar and the booking form still show every room and user.
-- [ ] README, DEVELOPMENT_GUIDE and CLAUDE.md are updated.
+- [x] The calendar and the booking form still show every room and user.
+- [x] README, DEVELOPMENT_GUIDE and CLAUDE.md are updated.

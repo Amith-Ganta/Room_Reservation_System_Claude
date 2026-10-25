@@ -96,19 +96,19 @@ None. `IReservationRepository.ListForReportAsync` and `IRoomRepository.ListAsync
    (there is none: bad input is already rejected by model validation).
 
 ## Definition of done
-- [ ] `dotnet build` and `dotnet test` pass (baseline 222 tests).
-- [ ] Tests: a room is flagged when it has enough resolved bookings and utilization is below the threshold;
+- [x] `dotnet build` and `dotnet test` pass (baseline 222 tests).
+- [x] Tests: a room is flagged when it has enough resolved bookings and utilization is below the threshold;
       not flagged just at the threshold (exactly 50 %), with too few resolved bookings (3 of 4), or with
       exactly `MinBookingsToFlag` bookings and low use (flagged).
-- [ ] Tests: a cancelled booking counts as planned but unused; an ended-early meeting lowers utilization;
+- [x] Tests: a cancelled booking counts as planned but unused; an ended-early meeting lowers utilization;
       a completed meeting without `EndedAt` counts fully; `EndedAt` before `Start` is clamped to 0.
-- [ ] Tests: Booked reservations are counted in `upcomingBookings` and `totalBookings` but not in the hours;
+- [x] Tests: Booked reservations are counted in `upcomingBookings` and `totalBookings` but not in the hours;
       an elapsed Booked reservation becomes Completed after the clock advances.
-- [ ] Tests: `from`/`to` filter by start (inclusive on both ends); `from > to` returns 400 `INVALID_REQUEST`.
-- [ ] Tests: a room without bookings is listed with zeros and `null` utilization; an inactive room is listed;
+- [x] Tests: `from`/`to` filter by start (inclusive on both ends); `from > to` returns 400 `INVALID_REQUEST`.
+- [x] Tests: a room without bookings is listed with zeros and `null` utilization; an inactive room is listed;
       ordering is flagged first, then total bookings descending, then name.
-- [ ] Tests: thresholds are read from options (a test with different option values changes the flag).
-- [ ] Endpoint test checks the JSON shape (field names, `generatedAt`, echoed `from`/`to`).
-- [ ] Seeded data (`DbSeeder`) gives exactly one flagged room: Boardroom (6 resolved, about 3.5 % used).
-- [ ] Mapping profile configuration test passes.
-- [ ] Swagger lists `GET /api/reports/usage`.
+- [x] Tests: thresholds are read from options (a test with different option values changes the flag).
+- [x] Endpoint test checks the JSON shape (field names, `generatedAt`, echoed `from`/`to`).
+- [x] Seeded data (`DbSeeder`) gives exactly one flagged room: Boardroom (6 resolved, about 3.5 % used).
+- [x] Mapping profile configuration test passes.
+- [x] Swagger lists `GET /api/reports/usage`.

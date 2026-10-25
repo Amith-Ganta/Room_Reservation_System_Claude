@@ -59,7 +59,7 @@ frontend/            React + TS app (src/api, src/pages, src/components, src/lib
 | 15 | frontend-tests | merged |
 | 16 | xunit-v3-migration | merged |
 
-Do not implement a stub unless the active task targets that spec. Update this table when a spec is merged.
+All 16 specs are merged. A new feature starts with a new spec (`/create-spec`). Update this table when a spec is merged.
 
 ## Booking rules (all validated in the backend)
 

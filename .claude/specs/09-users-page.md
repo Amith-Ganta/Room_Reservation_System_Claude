@@ -59,12 +59,12 @@ None.
 8. No new link or page beyond Users (Reservations, Calendar and Report belong to Specs 10-12).
 
 ## Definition of done
-- [ ] `npm run build` passes with no type errors.
-- [ ] `/users` lists the seeded users with their counts, in last name, first name order by default.
-- [ ] Sorting by last name and by active count works in both directions; a third kind of order is not offered.
-- [ ] The counts match the API response (`GET /api/users`); the page shows no number it computed.
-- [ ] Stopping the backend shows a readable `NETWORK_ERROR` alert and a Retry button; restarting the API and clicking
+- [x] `npm run build` passes with no type errors.
+- [x] `/users` lists the seeded users with their counts, in last name, first name order by default.
+- [x] Sorting by last name and by active count works in both directions; a third kind of order is not offered.
+- [x] The counts match the API response (`GET /api/users`); the page shows no number it computed.
+- [x] Stopping the backend shows a readable `NETWORK_ERROR` alert and a Retry button; restarting the API and clicking
       Retry recovers.
-- [ ] An empty user list shows "No users yet." (checked with the API started without `Seed__Enabled`).
-- [ ] The nav shows "Rooms" and "Users", and the active link is highlighted.
-- [ ] After Spec 10 exists: creating or cancelling a reservation changes the count on reload.
+- [x] An empty user list shows "No users yet." (checked with the API started without `Seed__Enabled`).
+- [x] The nav shows "Rooms" and "Users", and the active link is highlighted.
+- [x] After Spec 10 exists: creating or cancelling a reservation changes the count on reload.

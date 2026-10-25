@@ -39,6 +39,6 @@ and tests under `RoomReservation.Tests/Data` and `Repositories`.
 4. Test with a fresh InMemory database name per test.
 
 ## Definition of done
-- [ ] `dotnet build` and `dotnet test` pass.
-- [ ] Repository tests cover: each room filter, overlap edge (back-to-back is not an overlap), cancelled ignored, `EndedAt` respected, `CompleteElapsedAsync`.
-- [ ] Seeder test: expected counts, at least one inactive room, idempotent when run twice.
+- [x] `dotnet build` and `dotnet test` pass.
+- [x] Repository tests cover: each room filter, overlap edge (back-to-back is not an overlap), cancelled ignored, `EndedAt` respected, `CompleteElapsedAsync`.
+- [x] Seeder test: expected counts, at least one inactive room, idempotent when run twice.

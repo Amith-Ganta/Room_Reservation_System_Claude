@@ -680,7 +680,8 @@ dotnet backend/RoomReservation.Tests/bin/Debug/net8.0/RoomReservation.Tests.dll
 | Repositories (InMemory) | `ReservationRepositoryTests`, `RoomRepositoryTests`, `UserRepositoryTests` |
 | Domain, mapping, seed, errors | `EquipmentFlagsTests`, `MappingProfileTests`, `DbSeederTests`, `ResultAndErrorBodyTests` |
 
-The front end is checked by `npm run build` (strict type check plus a production build).
+The front end is checked by `npm run build` (strict type check plus a production build) and by `npm test` (98 vitest
+tests for the shared code: API client, paging, formatting helpers and four shared components). The back end has 318 tests.
 
 ---
 

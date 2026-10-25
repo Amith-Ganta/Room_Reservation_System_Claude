@@ -133,23 +133,23 @@ needs the user's approval at implementation time.
 11. No link or page beyond Report. The docs belong to Spec 13.
 
 ## Definition of done
-- [ ] `npm run build` passes with no type errors; `npm audit` shows no new high or critical finding from the added
+- [x] `npm run build` passes with no type errors; `npm audit` shows no new high or critical finding from the added
       packages; the PDF libraries appear in their own chunk, not in the main one.
-- [ ] `/report` loads with no filter and shows every room, with the thresholds and "generated" lines taken from the
+- [x] `/report` loads with no filter and shows every room, with the thresholds and "generated" lines taken from the
       response.
-- [ ] Seeded data: Boardroom is first, highlighted, with the chip "Often booked, rarely used"; no other room is
+- [x] Seeded data: Boardroom is first, highlighted, with the chip "Often booked, rarely used"; no other room is
       flagged; its figures match `GET /api/reports/usage` in the network log.
-- [ ] A room with no completed or cancelled bookings shows utilization "n/a".
-- [ ] Choosing a period requests `/api/reports/usage?from=…&to=…` with the local day start and day end as ISO
+- [x] A room with no completed or cancelled bookings shows utilization "n/a".
+- [x] Choosing a period requests `/api/reports/usage?from=…&to=…` with the local day start and day end as ISO
       timestamps (checked in the network log) and the table, the period line and the "generated" line update.
-- [ ] "From" later than "To" shows the API's `INVALID_REQUEST` error, keeps the inputs, and "Clear" restores the
+- [x] "From" later than "To" shows the API's `INVALID_REQUEST` error, keeps the inputs, and "Clear" restores the
       all-time report.
-- [ ] Switching the period quickly never shows the report of an earlier request.
-- [ ] Stopping the backend shows a readable `NETWORK_ERROR` alert with Retry, no stale table and a disabled Export
+- [x] Switching the period quickly never shows the report of an earlier request.
+- [x] Stopping the backend shows a readable `NETWORK_ERROR` alert with Retry, no stale table and a disabled Export
       button; Retry works once the backend is back.
-- [ ] "Export PDF" downloads `room-usage-report-{date}.pdf`; opened, it shows the title, generated time, period,
+- [x] "Export PDF" downloads `room-usage-report-{date}.pdf`; opened, it shows the title, generated time, period,
       thresholds and the same rooms, order, numbers, "n/a" values and flags as the screen, in landscape A4.
-- [ ] A filtered report exports with its own period line and rows (not the all-time ones).
-- [ ] The nav shows "Rooms", "Users", "Reservations", "Calendar" and "Report", the active link is highlighted, and at
+- [x] A filtered report exports with its own period line and rows (not the all-time ones).
+- [x] The nav shows "Rooms", "Users", "Reservations", "Calendar" and "Report", the active link is highlighted, and at
       375 px all five links are reachable.
-- [ ] The other pages (Rooms, Users, Reservations, Calendar) still work unchanged.
+- [x] The other pages (Rooms, Users, Reservations, Calendar) still work unchanged.

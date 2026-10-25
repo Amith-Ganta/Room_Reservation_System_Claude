@@ -125,23 +125,23 @@ None. (`@mui/material` already provides `Dialog`, `Select`, `Chip`, `Snackbar`.)
 11. No link or page beyond Reservations (Calendar and Report belong to Specs 11 and 12).
 
 ## Definition of done
-- [ ] `npm run build` passes with no type errors.
-- [ ] `/reservations` lists the seeded reservations, newest start first, with the correct status chips.
-- [ ] Each filter (room, organizer, status, from, to) changes the request and the rows; with no filter all rows show.
-- [ ] Creating a valid reservation closes the dialog, shows the new row and a confirmation.
-- [ ] Each rule failure shown from the API: at least R2 (room overlap), R4 (past start), R5 (capacity) and R7
+- [x] `npm run build` passes with no type errors.
+- [x] `/reservations` lists the seeded reservations, newest start first, with the correct status chips.
+- [x] Each filter (room, organizer, status, from, to) changes the request and the rows; with no filter all rows show.
+- [x] Creating a valid reservation closes the dialog, shows the new row and a confirmation.
+- [x] Each rule failure shown from the API: at least R2 (room overlap), R4 (past start), R5 (capacity) and R7
       (inactive room) are triggered in the browser and appear as `CODE -- message` inside the dialog, with the typed
       values kept. Two failing rules at once show both messages.
-- [ ] A blank title shows `TITLE_REQUIRED` from the API (the page does not check it itself).
-- [ ] Editing a future reservation updates the row; "Edit" and "Cancel" are absent on Completed and Cancelled rows.
-- [ ] Cancelling a future reservation (after confirming) changes its status to Cancelled; backing out of the confirm
+- [x] A blank title shows `TITLE_REQUIRED` from the API (the page does not check it itself).
+- [x] Editing a future reservation updates the row; "Edit" and "Cancel" are absent on Completed and Cancelled rows.
+- [x] Cancelling a future reservation (after confirming) changes its status to Cancelled; backing out of the confirm
       dialog changes nothing.
-- [ ] "End now" on a running reservation sets status Completed and shows "Ended early at <time>".
-- [ ] A stale action (for example cancelling a reservation that another browser tab already cancelled) shows the 409
+- [x] "End now" on a running reservation sets status Completed and shows "Ended early at <time>".
+- [x] A stale action (for example cancelling a reservation that another browser tab already cancelled) shows the 409
       error and the list refreshes.
-- [ ] Stopping the backend shows a readable `NETWORK_ERROR` alert and Retry on the list, and inside the dialog on save.
-- [ ] An empty result shows "No reservations match." (checked with a filter that matches nothing).
-- [ ] Double-clicking Save creates one reservation only.
-- [ ] The nav shows "Rooms", "Users" and "Reservations", and the active link is highlighted.
-- [ ] The Users page shows the active count rising after a create and falling after a cancel or an early end (the
+- [x] Stopping the backend shows a readable `NETWORK_ERROR` alert and Retry on the list, and inside the dialog on save.
+- [x] An empty result shows "No reservations match." (checked with a filter that matches nothing).
+- [x] Double-clicking Save creates one reservation only.
+- [x] The nav shows "Rooms", "Users" and "Reservations", and the active link is highlighted.
+- [x] The Users page shows the active count rising after a create and falling after a cancel or an early end (the
       count comes from the API on reload).

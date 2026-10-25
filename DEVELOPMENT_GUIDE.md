@@ -94,8 +94,10 @@ The spec files are in `.claude/specs/`. Status is tracked in the table in `CLAUD
 | 12 | `report-pdf` | Usage report page and PDF export |
 | 13 | `docs-readme` | README and this guide |
 | 14 | `list-paging` | Server-side paging of the three list endpoints |
+| 15 | `frontend-tests` | Vitest and Testing Library unit tests for the shared front-end code |
+| 16 | `xunit-v3-migration` | Back-end tests move from xUnit 2 to xunit.v3 |
 
-Specs 09 to 12 use the standard sections of `/create-spec`, in this order: Overview, Depends on, Endpoints / Pages,
+Specs 09 to 12, 14 and 16 use the standard sections of `/create-spec`, in this order: Overview, Depends on, Endpoints / Pages,
 Data changes, Files to change, Files to create, New dependencies, Rules for implementation and Definition of done.
 Spec 13 adds two content sections (README content and DEVELOPMENT_GUIDE.md content) for the documents it describes.
 Specs 01 to 08 were written before that template and use similar sections with their own headings. The last section

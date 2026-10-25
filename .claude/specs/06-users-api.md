@@ -48,10 +48,10 @@ None.
    (there is none for this endpoint).
 
 ## Definition of done
-- [ ] `dotnet build` and `dotnet test` pass (baseline 210 tests).
-- [ ] Tests: count ignores Cancelled and Completed reservations, counts only Booked, an elapsed Booked
+- [x] `dotnet build` and `dotnet test` pass (baseline 210 tests).
+- [x] Tests: count ignores Cancelled and Completed reservations, counts only Booked, an elapsed Booked
       reservation stops counting after the clock advances, a user with no reservations is listed with 0.
-- [ ] Tests: count is per organizer (two users with different numbers), ordering is last name then first name,
+- [x] Tests: count is per organizer (two users with different numbers), ordering is last name then first name,
       an empty user table gives an empty list with 200.
-- [ ] Mapping profile configuration test passes.
-- [ ] Swagger lists `GET /api/users`.
+- [x] Mapping profile configuration test passes.
+- [x] Swagger lists `GET /api/users`.
