@@ -686,7 +686,7 @@ Versions are taken from `RoomReservation.Api.csproj`, `RoomReservation.Tests.csp
 | Data | EF Core InMemory | 8.0.11 |
 | Mapping | AutoMapper | 15.1.1 |
 | API docs | Swashbuckle (Swagger) | 6.9.0 |
-| Tests | xUnit | 2.9.2 |
+| Tests | xUnit (xunit.v3) | 4.0.2 |
 | Tests | FluentAssertions | 6.12.2 |
 | Tests | Microsoft.AspNetCore.Mvc.Testing | 8.0.11 |
 | Tests | Microsoft.Extensions.TimeProvider.Testing | 8.10.0 |
