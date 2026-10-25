@@ -75,10 +75,10 @@ Error codes already exist in `Common/ErrorCodes.cs`; the review added `TITLE_TOO
 7. The check-then-insert race (two requests passing R2/R3 at the same time) is closed by the static write lock in Spec 05, not here.
 
 ## Definition of done
-- [ ] `dotnet build` and `dotnet test` pass.
-- [ ] Boundary tests: exactly 7 days allowed, 7 days + 1 s rejected, exactly 90 days allowed, 90 days + 1 s rejected, start == now rejected, start 1 s after now allowed.
-- [ ] Overlap tests: back-to-back allowed, partial overlap rejected, cancelled ignored, edit excludes itself, ended-early frees the room, R3 mirrors R2 for the organizer.
-- [ ] Capacity (attendees == capacity allowed, +1 rejected) and inactive-room tests; multiple violations returned together in the documented order.
-- [ ] Basic input errors tested (end before start, end == start, blank title, 0 and negative attendees) and returned without R1-R7.
-- [ ] Limits changed through options change the outcome (proves nothing is hard-coded).
-- [ ] Lifecycle tests: elapsed Booked becomes Completed, future Booked and Cancelled are untouched, second run changes nothing.
+- [x] `dotnet build` and `dotnet test` pass.
+- [x] Boundary tests: exactly 7 days allowed, 7 days + 1 s rejected, exactly 90 days allowed, 90 days + 1 s rejected, start == now rejected, start 1 s after now allowed.
+- [x] Overlap tests: back-to-back allowed, partial overlap rejected, cancelled ignored, edit excludes itself, ended-early frees the room, R3 mirrors R2 for the organizer.
+- [x] Capacity (attendees == capacity allowed, +1 rejected) and inactive-room tests; multiple violations returned together in the documented order.
+- [x] Basic input errors tested (end before start, end == start, blank title, 0 and negative attendees) and returned without R1-R7.
+- [x] Limits changed through options change the outcome (proves nothing is hard-coded).
+- [x] Lifecycle tests: elapsed Booked becomes Completed, future Booked and Cancelled are untouched, second run changes nothing.

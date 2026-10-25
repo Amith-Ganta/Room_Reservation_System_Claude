@@ -37,7 +37,7 @@ AutoMapper 14.0.0.
 3. Inactive rooms are returned (the UI shows them); booking is blocked later by R7.
 
 ## Definition of done
-- [ ] `dotnet build` and `dotnet test` pass.
-- [ ] Endpoint tests for every filter and for the combination of filters.
-- [ ] Mapping profile configuration test passes.
-- [ ] Swagger lists `GET /api/rooms` with the query parameters.
+- [x] `dotnet build` and `dotnet test` pass.
+- [x] Endpoint tests for every filter and for the combination of filters.
+- [x] Mapping profile configuration test passes.
+- [x] Swagger lists `GET /api/rooms` with the query parameters.

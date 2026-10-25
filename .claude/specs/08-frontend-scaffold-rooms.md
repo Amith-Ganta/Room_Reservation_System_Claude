@@ -72,9 +72,9 @@ Dev: typescript, vite, @vitejs/plugin-react, @types/react, @types/react-dom.
 7. Do not add the Users, Reservations, Calendar or Report links or pages; they belong to Specs 09-12.
 
 ## Definition of done
-- [ ] `npm run build` passes with no type errors.
-- [ ] Rooms page lists the seeded rooms, including inactive ones, ordered by floor then name.
-- [ ] Each filter changes the request and the result; "Clear filters" restores the full list.
-- [ ] A filter combination with no match shows the empty message.
-- [ ] Stopping the backend shows a readable `NETWORK_ERROR` alert, not a blank page; restarting it and changing a filter recovers.
-- [ ] `/` and unknown routes land on `/rooms`.
+- [x] `npm run build` passes with no type errors.
+- [x] Rooms page lists the seeded rooms, including inactive ones, ordered by floor then name.
+- [x] Each filter changes the request and the result; "Clear filters" restores the full list.
+- [x] A filter combination with no match shows the empty message.
+- [x] Stopping the backend shows a readable `NETWORK_ERROR` alert, not a blank page; restarting it and changing a filter recovers.
+- [x] `/` and unknown routes land on `/rooms`.

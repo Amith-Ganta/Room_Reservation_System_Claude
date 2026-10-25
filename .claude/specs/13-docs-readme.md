@@ -73,8 +73,8 @@ None.
    README, not the code.
 
 ## Definition of done
-- [ ] A fresh clone follows the README and gets a running API and front end.
-- [ ] Requirement coverage table has no empty rows.
-- [ ] The four reviewer notes (AutoMapper licence, empty/error state, `AllowedHosts`, PDF font) are in the README and match the code.
-- [ ] `DEVELOPMENT_GUIDE.md` exists and its command and agent names match `.claude/`.
-- [ ] Every command in the README was run successfully; `dotnet build`, `dotnet test` and `npm run build` still pass.
+- [x] A fresh clone follows the README and gets a running API and front end.
+- [x] Requirement coverage table has no empty rows.
+- [x] The four reviewer notes (AutoMapper licence, empty/error state, `AllowedHosts`, PDF font) are in the README and match the code.
+- [x] `DEVELOPMENT_GUIDE.md` exists and its command and agent names match `.claude/`.
+- [x] Every command in the README was run successfully; `dotnet build`, `dotnet test` and `npm run build` still pass.

@@ -31,7 +31,7 @@ None yet. The app must start and serve `/swagger`.
 - `backend/RoomReservation.Api/Configuration/BookingRulesOptions.cs`, `UsageReportOptions.cs`
 - `backend/RoomReservation.Api/Common/Result.cs`, `ErrorCodes.cs`, `ApiErrorResponse.cs`
 - `backend/RoomReservation.Tests/RoomReservation.Tests.csproj` and a smoke test (app starts, swagger JSON served, options bind)
-- `.gitignore`, `README.md` (stub: how to run)
+- `.gitignore`, `README.md` (first version: how to run; spec 13 completes it)
 
 ## New dependencies
 Swashbuckle.AspNetCore 6.9.0. Test project: xUnit, FluentAssertions 6.12.2,
@@ -46,7 +46,7 @@ Microsoft.AspNetCore.Mvc.Testing 8.0.11, Microsoft.Extensions.TimeProvider.Testi
 6. No authentication, no `[Authorize]`, no EF migrations.
 
 ## Definition of done
-- [ ] `dotnet build` is clean (no warnings treated as errors).
-- [ ] `dotnet test` passes the smoke tests.
-- [ ] `dotnet run` serves Swagger on http://localhost:5080/swagger.
-- [ ] Startup fails with a clear error if `MaxDurationDays` is 0 (tested).
+- [x] `dotnet build` is clean (no warnings treated as errors).
+- [x] `dotnet test` passes the smoke tests.
+- [x] `dotnet run` serves Swagger on http://localhost:5080/swagger.
+- [x] Startup fails with a clear error if `MaxDurationDays` is 0 (tested).

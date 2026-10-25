@@ -119,24 +119,24 @@ them needs the user's approval at implementation time.
 10. No link or page beyond Calendar (Report belongs to Spec 12).
 
 ## Definition of done
-- [ ] `npm run build` passes with no type errors; `npm audit` shows no new high or critical finding from the added
+- [x] `npm run build` passes with no type errors; `npm audit` shows no new high or critical finding from the added
       packages.
-- [ ] `/calendar` shows the first room; changing the room reloads the events for that room only.
-- [ ] A seeded Booked reservation appears in the right room, day, time slot and primary colour; a Completed one in
+- [x] `/calendar` shows the first room; changing the room reloads the events for that room only.
+- [x] A seeded Booked reservation appears in the right room, day, time slot and primary colour; a Completed one in
       the success colour with "(Completed)"; a Cancelled one muted and struck through with "(Cancelled)".
-- [ ] A reservation ended early ends at `endedAt` on the grid and the detail dialog shows both times.
-- [ ] Previous / next / today and the week / day / month buttons keep working and request only the visible range
+- [x] A reservation ended early ends at `endedAt` on the grid and the detail dialog shows both times.
+- [x] Previous / next / today and the week / day / month buttons keep working and request only the visible range
       (checked in the network log: `from` and `to` match the view).
-- [ ] Clicking an event (and pressing Enter on a focused event) opens the detail dialog with the right values.
-- [ ] Selecting a future free slot in the week view opens the create dialog with room, start and end filled in (local
+- [x] Clicking an event (and pressing Enter on a focused event) opens the detail dialog with the right values.
+- [x] Selecting a future free slot in the week view opens the create dialog with room, start and end filled in (local
       time shown correctly); saving creates the reservation, closes the dialog, shows a confirmation and the event
       appears without a page reload.
-- [ ] Selecting an occupied slot or a past slot shows `R2_ROOM_OVERLAP` / `R4_PAST_START` from the API inside the
+- [x] Selecting an occupied slot or a past slot shows `R2_ROOM_OVERLAP` / `R4_PAST_START` from the API inside the
       dialog, with the values kept.
-- [ ] In month view, clicking a day switches to that day's view.
-- [ ] "New reservation" opens the dialog with only the room pre-filled.
-- [ ] Stopping the backend shows a readable `NETWORK_ERROR` alert with Retry; the visible date and view are kept,
+- [x] In month view, clicking a day switches to that day's view.
+- [x] "New reservation" opens the dialog with only the room pre-filled.
+- [x] Stopping the backend shows a readable `NETWORK_ERROR` alert with Retry; the visible date and view are kept,
       and Retry loads the events again once the backend is back.
-- [ ] Switching room or navigating quickly never shows the events of an earlier request (no stale events).
-- [ ] The nav shows "Rooms", "Users", "Reservations" and "Calendar", and the active link is highlighted.
-- [ ] The Reservations page still works unchanged (create and edit through the dialog).
+- [x] Switching room or navigating quickly never shows the events of an earlier request (no stale events).
+- [x] The nav shows "Rooms", "Users", "Reservations" and "Calendar", and the active link is highlighted.
+- [x] The Reservations page still works unchanged (create and edit through the dialog).

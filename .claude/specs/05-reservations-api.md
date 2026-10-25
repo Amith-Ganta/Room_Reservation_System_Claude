@@ -121,14 +121,14 @@ None.
 8. Swagger: `ProducesResponseType` for every status the endpoint can return, using `ApiErrorResponse` for failures.
 
 ## Definition of done
-- [ ] `dotnet build` and `dotnet test` pass.
-- [ ] Endpoint test per rule R1-R7 asserting HTTP status (422), code and message; a request that breaks several rules returns all codes together in the documented order.
-- [ ] Basic input errors (end <= start, blank title, title too long, attendees < 1) return 422 alone.
-- [ ] Create: 201, `Location` header, response shape and string status; unknown room and unknown user -> 404 with the right code; nothing is stored on failure.
-- [ ] Concurrency test: two parallel identical bookings -> exactly one 201 and one 422 `R2_ROOM_OVERLAP`; also two parallel bookings for the same organizer in different rooms -> one 201 and one 422 `R3_USER_OVERLAP`.
-- [ ] Edit: success (including moving to a free slot and keeping the same slot), rules re-checked with the reservation excluded from its own overlap, room/organizer change reflected in the response, 409 for started / completed / cancelled, 404 for unknown id.
-- [ ] Cancel and end early with `FakeTimeProvider`: every row of the state table above (success and 409), second call -> 409, a cancelled slot can be booked again, an ended-early slot is free from `EndedAt`, `End` is unchanged after end early.
-- [ ] Lazy completion: an elapsed `Booked` reservation shows `Completed` in the list and in get-by-id without any other call.
-- [ ] Each list filter tested alone and combined (room, user, status, from, to), including the half-open window edges, case-insensitive `status`, and the 400 cases (`status=1`, `status=abc`, `from > to`, bad GUID, offset-less timestamp).
-- [ ] Malformed JSON, an empty body and a malformed `{id}` give the standard 400 body without framework internals.
-- [ ] Mapping tests pass; Swagger lists all six endpoints.
+- [x] `dotnet build` and `dotnet test` pass.
+- [x] Endpoint test per rule R1-R7 asserting HTTP status (422), code and message; a request that breaks several rules returns all codes together in the documented order.
+- [x] Basic input errors (end <= start, blank title, title too long, attendees < 1) return 422 alone.
+- [x] Create: 201, `Location` header, response shape and string status; unknown room and unknown user -> 404 with the right code; nothing is stored on failure.
+- [x] Concurrency test: two parallel identical bookings -> exactly one 201 and one 422 `R2_ROOM_OVERLAP`; also two parallel bookings for the same organizer in different rooms -> one 201 and one 422 `R3_USER_OVERLAP`.
+- [x] Edit: success (including moving to a free slot and keeping the same slot), rules re-checked with the reservation excluded from its own overlap, room/organizer change reflected in the response, 409 for started / completed / cancelled, 404 for unknown id.
+- [x] Cancel and end early with `FakeTimeProvider`: every row of the state table above (success and 409), second call -> 409, a cancelled slot can be booked again, an ended-early slot is free from `EndedAt`, `End` is unchanged after end early.
+- [x] Lazy completion: an elapsed `Booked` reservation shows `Completed` in the list and in get-by-id without any other call.
+- [x] Each list filter tested alone and combined (room, user, status, from, to), including the half-open window edges, case-insensitive `status`, and the 400 cases (`status=1`, `status=abc`, `from > to`, bad GUID, offset-less timestamp).
+- [x] Malformed JSON, an empty body and a malformed `{id}` give the standard 400 body without framework internals.
+- [x] Mapping tests pass; Swagger lists all six endpoints.
