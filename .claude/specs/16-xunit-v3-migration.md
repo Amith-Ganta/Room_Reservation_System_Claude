@@ -25,9 +25,9 @@ None.
 - `backend/RoomReservation.Tests/AssemblyInfo.cs`: xunit.v3 turns `[assembly: CollectionBehavior(DisableTestParallelization = true)]`
   into a compile error (CS0619). It becomes `[assembly: Parallelization(Mode = ParallelMode.None)]` (namespaces `Xunit.Sdk`
   and `Xunit.v3`). Same effect, because the `WebApplicationFactory` hosts share static startup state.
-- `RoomReservation.Tests.csproj` also gets `<NoWarn>xUnit1051</NoWarn>`. The new xunit.v3 analyzer raises 144 advisory
-  warnings ("pass `TestContext.Current.CancellationToken`") across 13 test files. Fixing them would mean editing 144 test
-  call sites, which this spec does not do. Adopting the token can be a later cleanup.
+- `RoomReservation.Tests.csproj` also gets `<NoWarn>$(NoWarn);xUnit1051</NoWarn>`. The new xunit.v3 analyzer raises
+  about 144 advisory warnings ("pass `TestContext.Current.CancellationToken`") across the test files. Fixing them would
+  mean editing every one of those call sites, which this spec does not do. Adopting the token can be a later cleanup.
 - Windows note: an xunit.v3 test project builds an app host (`RoomReservation.Tests.exe`). On a machine where Defender
   blocks new unsigned executables (ASR rule "Block executable files from running unless they meet a prevalence, age,
   or trusted list criterion"), `dotnet test` fails with "Access is denied". Run the test DLL instead:
@@ -41,8 +41,8 @@ None, apart from this spec.
 ## New dependencies
 | Package | From | To | Why |
 |---------|------|----|-----|
-| `xunit.v3` | (new, replaces `xunit` 2.9.2) | 4.0.2 (latest stable on NuGet when this spec was written) | the xUnit 3 framework |
-| `xunit.runner.visualstudio` | 2.8.2 | 4.0.1 (latest stable; the exact version is confirmed when the build runs) | lets `dotnet test` discover and run xunit.v3 tests |
+| `xunit.v3` | (new, replaces `xunit` 2.9.2) | 4.0.2 (pinned) | the xUnit 3 framework |
+| `xunit.runner.visualstudio` | 2.8.2 | 4.0.1 (pinned; restore confirmed it) | lets `dotnet test` discover and run xunit.v3 tests |
 
 Both are test-only packages. Nothing is added to `RoomReservation.Api`. Installing them needs the user's approval.
 
@@ -53,6 +53,8 @@ Both are test-only packages. Nothing is added to `RoomReservation.Api`. Installi
 - Keep the test count: 318 tests passed before this spec, and 318 must pass after it.
 - Do not change the assertion library (FluentAssertions stays at 6.12.2) and do not add other packages.
 - `dotnet test` must keep working from the solution folder and from the test project folder, with no extra arguments.
+  This was not verified on the author's Windows machine, where the Defender rule in the Windows note blocks the app
+  host. There the tests were run through the test DLL. It is expected to work on a machine without that rule.
 - Stop the API before `dotnet build` and `dotnet test` (it locks the DLLs).
 
 ## Definition of done
@@ -61,5 +63,6 @@ Both are test-only packages. Nothing is added to `RoomReservation.Api`. Installi
 - [x] The no-parallelization setting still applies (the test run is stable, with no host start-up failures).
 - [x] `README.md` shows the new xUnit version.
 - [x] `dotnet build` passes with no new warnings (0 warnings, 0 errors; `xUnit1051` is suppressed, see above).
-- [x] The 318 tests pass under xunit.v3 (run through the test DLL, see the Windows note above).
+- [x] The 318 tests pass under xunit.v3 (run through the test DLL, see the Windows note above). `dotnet test` itself
+  was not run successfully on the author's machine.
 - [x] `npm run build` and `npm test` in `frontend` are unaffected (no file under `frontend/` changed).
