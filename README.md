@@ -1,5 +1,7 @@
 # Room Reservation System
 
+[![CI](https://github.com/Amith-Ganta/Room_Reservation_System_Claude/actions/workflows/ci.yml/badge.svg)](https://github.com/Amith-Ganta/Room_Reservation_System_Claude/actions/workflows/ci.yml)
+
 A small, complete room booking application: an **ASP.NET Core 8** Web API and a **React + TypeScript** front end.
 People can browse rooms, book them, change or cancel a booking, end a running meeting early, see a calendar for each
 room, and read a usage report that answers one question: *which rooms are booked often but rarely used?*
@@ -679,6 +681,9 @@ dotnet backend/RoomReservation.Tests/bin/Debug/net8.0/RoomReservation.Tests.dll
 | Services and rules | `ReservationValidatorTests`, `ReservationServiceTests`, `ReservationLifecycleTests`, `UsageReportServiceTests`, `RoomServiceTests`, `UserServiceTests` |
 | Repositories (InMemory) | `ReservationRepositoryTests`, `RoomRepositoryTests`, `UserRepositoryTests` |
 | Domain, mapping, seed, errors | `EquipmentFlagsTests`, `MappingProfileTests`, `DbSeederTests`, `ResultAndErrorBodyTests` |
+
+On every pull request and every push to `main`, GitHub Actions ([ci.yml](.github/workflows/ci.yml)) builds and tests
+both sides on a clean Linux runner.
 
 The front end is checked by `npm run build` (strict type check plus a production build) and by `npm test` (98 vitest
 tests for the shared code: API client, paging, formatting helpers and four shared components). The back end has 318 tests.
