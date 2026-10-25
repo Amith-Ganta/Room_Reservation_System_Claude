@@ -665,6 +665,14 @@ dotnet test
 The suite covers each layer on its own and the whole API end to end. It uses a fake clock, so rules about "now",
 the horizon and lazy completion are tested without waiting.
 
+An xunit.v3 test project builds its own executable. On a Windows machine where Defender blocks new unsigned programs
+(the ASR rule "Block executable files from running unless they meet a prevalence, age, or trusted list criterion"),
+`dotnet test` can fail with "Access is denied". Run the test DLL instead:
+
+```bash
+dotnet backend/RoomReservation.Tests/bin/Debug/net8.0/RoomReservation.Tests.dll
+```
+
 | Area | Test classes |
 |------|--------------|
 | HTTP, through `WebApplicationFactory` | `ApiSmokeTests`, `ErrorHandlingTests`, `Controllers/*EndpointTests` |
