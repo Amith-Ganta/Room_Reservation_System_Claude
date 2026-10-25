@@ -15,6 +15,7 @@ shows what the API returns.
 [Concurrency](#concurrency) · [Usage report](#usage-report) · [API summary](#api-summary) · [Front end](#front-end) ·
 [Configuration](#configuration) · [Project structure](#project-structure) · [Design decisions](#design-decisions) ·
 [Design patterns](#design-patterns) · [Testing](#testing) · [Tools](#tools-and-versions) ·
+[How to recreate this project](#how-to-recreate-this-project) ·
 [Notes for reviewers](#notes-for-reviewers) · [Known limitations](#known-limitations)
 
 ---
@@ -712,6 +713,44 @@ Versions are taken from `RoomReservation.Api.csproj`, `RoomReservation.Tests.csp
 | Build | TypeScript | ^7.0.2 |
 | Build | Vite | ^8.3.5 |
 | Workflow | Claude Code (spec-driven development) and GitHub Copilot review | see [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) |
+
+---
+
+## How to recreate this project
+
+The repository holds the code and also the material used to produce it. With Claude Code, a developer can rebuild an
+application with the same behaviour from these files alone.
+
+**What you need**
+
+| File or folder | What it gives you |
+|----------------|-------------------|
+| [CLAUDE.md](CLAUDE.md) | The project rules: stack, folder layout, booking rules R1 to R7, the NEVER list (no hard-coded limits, no `DateTime.Now`, no auth, no migrations), the subagent policy and the spec table. |
+| [.claude/specs/](.claude/specs) | Seventeen specs, `01-project-setup` to `17-ci-workflow`. Each one lists what it depends on, the files to change or create, the rules and a Definition of done. |
+| [.claude/commands/](.claude/commands) | The workflow as five slash commands: `/create-spec`, `/test-feature`, `/code-review-feature`, `/ship-feature` and `/fix-copilot-review`. |
+| [.claude/agents/](.claude/agents) | Four read-mostly helpers: a quality reviewer, a security reviewer, a test runner and a test writer. |
+| [.claude/skills/frontend-design/](.claude/skills/frontend-design) | The design guidance that shaped the pages in specs 08 to 12. |
+| [.claude/settings.json](.claude/settings.json) | The shared permission rules for the commands above. |
+
+**How to use them**
+
+1. Start with an empty repository and copy in `CLAUDE.md` and the `.claude/` folder.
+2. Apply the specs in numeric order. Each spec builds on the earlier ones, so the order matters.
+3. For each spec, implement it, run `/test-feature NN`, then `/code-review-feature NN`. The spec's Definition of done
+   is the check that the slice is finished.
+4. `/ship-feature NN` and `/fix-copilot-review` open pull requests and ask for a GitHub Copilot review. They need a
+   GitHub repository, the `gh` CLI and a Copilot subscription. Without those, skip the two commands and merge by hand.
+
+**What to expect**
+
+- The result matches the original in behaviour, not line by line. The rules, the API contract, the report numbers and
+  the tests are pinned by the specs. Names of private helpers, comments and small layout choices can differ.
+- The original task brief from the company is not part of the repository. [Requirement coverage](#requirement-coverage)
+  shows how each requirement was understood, but the specs are the source of truth for a rebuild.
+- A rebuild from the specs alone has not been run end to end. The specs were written while the project was built, and
+  each one was merged only after its tests passed.
+- [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) tells the story of the build, spec by spec, and is useful as a map
+  before you start.
 
 ---
 
